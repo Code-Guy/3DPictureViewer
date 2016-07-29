@@ -148,7 +148,7 @@ GLint Shader::getProgramParam(GLint param)
 	return ret;
 }
 
-bool ReadFile(const char* pFileName, string& outFile)
+bool Shader::readFile(const char* pFileName, string &outFile)
 {
 	ifstream f(pFileName);
 

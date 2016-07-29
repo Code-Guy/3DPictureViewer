@@ -20,15 +20,19 @@ MainWidget::MainWidget(QWidget *parent)
 	initOpenGLContext();
 	initMultiSample();
 	initGlew();
+	initGLStates();
 
 	//初始化FPS计时器
 	fpsTime = new QTime;
 	fpsTime->start();
+
+	scene = new Scene(WIDTH, HEIGHT);
 }
 
 MainWidget::~MainWidget()
 {
 	delete fpsTime;
+	delete scene;
 
 	wglDeleteContext(_dummy_glctx);
 	wglDeleteContext(_real_glctx);
@@ -36,14 +40,14 @@ MainWidget::~MainWidget()
 
 void MainWidget::logic(float deltaTime)
 {
-
+	scene->logic(deltaTime);
 }
 
 void MainWidget::render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
 
+	scene->render();
 }
 
 void MainWidget::paintEvent(QPaintEvent* evt)
@@ -57,6 +61,8 @@ void MainWidget::paintEvent(QPaintEvent* evt)
 	HDC hdc = GetDC(hwnd);
 	SwapBuffers(hdc);
 	ReleaseDC(hwnd, hdc);
+
+	update();
 }
 
 void MainWidget::initWidgetProp()//初始化widget的一些属性
@@ -118,6 +124,15 @@ void MainWidget::initGlew()//初始化Glew
 		printf("Failed to initialize GLEW\n");
 		exit(-1);
 	}
+}
+
+void MainWidget::initGLStates()//初始化opengl参数
+{
+	glClearColor(0, 1, 0, 1);
+
+	glFrontFace(GL_CCW);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
 }
 
 bool MainWidget::initMultiSample()//设置MultiSample

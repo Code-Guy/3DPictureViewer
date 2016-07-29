@@ -6,6 +6,8 @@
 #include <QTimer>
 #include "ui_mainwidget.h"
 
+#include "scene.h"
+
 class MainWidget : public QWidget
 {
 	Q_OBJECT
@@ -28,15 +30,17 @@ private:
 	void initOpenGLContext();//初始化window界面context
 	bool initMultiSample();//设置MultiSample
 	void initGlew();//初始化Glew
+	void initGLStates();//初始化opengl参数
 
 	bool setMultisample(HWND hWnd, int sampleNum, int &pixelFormat);
 	bool wglIsExtensionSupported(const char *extension);
 
 	void tickClock();
 
-	QTimer drawTimer;//帧刷新计时器
 	QTime *fpsTime;//FPS计时器
 	float deltaTime;//上一帧绘制所需要的之间
+
+	Scene *scene;
 };
 
 #endif // MAINWIDGET_H

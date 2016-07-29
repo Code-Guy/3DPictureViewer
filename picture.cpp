@@ -5,40 +5,44 @@ Picture::Picture(std::string fileName)
 {
 	texture = new Texture(fileName);
 
+	size = 1.0f;
+	translation = glm::vec3();
+	rotation = glm::vec3();
+
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(3, buffers);
 
-	pos[0] = glm::vec3(-1.0f, 1.0f, 0.0f);
-	pos[1] = glm::vec3(1.0f, 1.0f, 0.0f);
-	pos[2] = glm::vec3(1.0f, -1.0f, 0.0f);
-	pos[3] = glm::vec3(-1.0f, -1.0f, 0.0f);
+	pos[0] = glm::vec3(1.0f, 1.0f, 0.0f);
+	pos[1] = glm::vec3(-1.0f, 1.0f, 0.0f);
+	pos[2] = glm::vec3(-1.0f, -1.0f, 0.0f);
+	pos[3] = glm::vec3(1.0f, -1.0f, 0.0f);
 
-	texCoord[0] = glm::vec2(0.0f, 0.0f);
-	texCoord[1] = glm::vec2(1.0f, 0.0f);
-	texCoord[2] = glm::vec2(1.0f, 1.0f);
-	texCoord[3] = glm::vec2(0.0f, 1.0f);
+	texCoord[0] = glm::vec2(0.0f, 1.0f);
+	texCoord[1] = glm::vec2(1.0f, 1.0f);
+	texCoord[2] = glm::vec2(1.0f, 0.0f);
+	texCoord[3] = glm::vec2(0.0f, 0.0f);
 
 	indices[0] = 0;
 	indices[1] = 1;
 	indices[2] = 2;
-	indices[3] = 0;
-	indices[4] = 2;
-	indices[5] = 3;
+	indices[3] = 2;
+	indices[4] = 3;
+	indices[5] = 0;
 
 	glBindVertexArray(vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[POS_VB]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(pos[0]) * 4, pos, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(POS_LOCATION);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(POS_LOCATION, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffers[TEXCOORD_VB]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(texCoord[0]) * 4, texCoord, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(texCoord), texCoord, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(TEXCOORD_LOCATION);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(TEXCOORD_LOCATION, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[INDEX_VB]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices[0]) * 6, indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	glBindVertexArray(0);
 }
@@ -68,6 +72,33 @@ void Picture::setRotation(glm::vec3 rot)
 	this->rotation = rot;
 }
 
+void Picture::addSize(float size)
+{
+	this->size += size;
+}
+
+void Picture::addPosition(glm::vec3 pos)
+{
+	this->translation += pos;
+}
+
+void Picture::addRotation(glm::vec3 rot)
+{
+	this->rotation += rot;
+
+	for (auto &r : rotation)
+	{
+		if (r > 360)
+		{
+			r -= 360;
+		}
+		else if(r < 0)
+		{
+			r += 360;
+		}
+	}
+}
+
 void Picture::render(PictureShader *pictureShader)
 {
 	glBindVertexArray(vao);
@@ -75,7 +106,11 @@ void Picture::render(PictureShader *pictureShader)
 	glm::mat4 M = getModelMatrix();
 	glm::mat4 VP = Camera::getCamera()->getViewProjMatrix();
 
+	pictureShader->enable();
 	pictureShader->setMVP(VP * M);
+	texture->bind(GL_TEXTURE0);
+
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
 }

@@ -14,11 +14,11 @@ bool PictureShader::init()
 		return false;
 	}
 
-	if (!addShader(GL_VERTEX_SHADER, "Resources/shader/Line.vs"))
+	if (!addShader(GL_VERTEX_SHADER, "Resources/shaders/picture.vert"))
 	{
 		return false;
 	}
-	if (!addShader(GL_FRAGMENT_SHADER, "Resources/shader/Line.fs"))
+	if (!addShader(GL_FRAGMENT_SHADER, "Resources/shaders/picture.frag"))
 	{
 		return false;
 	}

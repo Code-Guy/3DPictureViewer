@@ -2,6 +2,7 @@
 #define _SHADER_H
 
 #include <list>
+#include <string>
 #include <GL/glew.h>
 
 typedef std::list<GLuint> ShaderObjList;
@@ -29,7 +30,7 @@ protected:
 private:
 	ShaderObjList shaderObjList;
 
-	static bool readFile(const char *pFileName, string &outFile);
+	static bool readFile(const char *pFileName, std::string &outFile);
 };
 
 #endif //_SHADER_H

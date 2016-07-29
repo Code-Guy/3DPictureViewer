@@ -48,7 +48,7 @@ glm::mat4 Camera::getViewProjMatrix()
 }
 
 void Camera::setCamera(glm::vec3 pos, glm::vec3 target, glm::vec3 worldUp, float aspectRatio,
-	float fov = 45.0f, float nearDist = 0.1f, float farDist = 1000.0f)
+	float fov, float nearDist, float farDist)
 {
 	camera = new Camera(pos, target, worldUp, aspectRatio, fov, nearDist, farDist);
 }
@@ -56,6 +56,11 @@ void Camera::setCamera(glm::vec3 pos, glm::vec3 target, glm::vec3 worldUp, float
 Camera *Camera::getCamera()
 {
 	return camera;
+}
+
+void Camera::destoryCamera()
+{
+	delete camera;
 }
 
 void Camera::updateCameraVectors()

@@ -23,6 +23,10 @@ public:
 	void setPosition(glm::vec3 pos);
 	void setRotation(glm::vec3 rot);
 
+	void addSize(float size);
+	void addPosition(glm::vec3 pos);
+	void addRotation(glm::vec3 rot);
+
 	void render(PictureShader *pictureShader);
 
 private:

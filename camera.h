@@ -20,8 +20,8 @@ public:
 
 	static void setCamera(glm::vec3 pos, glm::vec3 target, glm::vec3 worldUp, float aspectRatio,
 		float fov = 45.0f, float nearDist = 0.1f, float farDist = 1000.0f);
-
 	static Camera *getCamera();
+	static void destoryCamera();
 
 private:
 	static Camera *camera;
