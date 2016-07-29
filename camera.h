@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/ext.hpp>
 
 class Camera
 {
@@ -17,7 +18,14 @@ public:
 	glm::mat4 getProjMatrix();
 	glm::mat4 getViewProjMatrix();
 
+	static void setCamera(glm::vec3 pos, glm::vec3 target, glm::vec3 worldUp, float aspectRatio,
+		float fov = 45.0f, float nearDist = 0.1f, float farDist = 1000.0f);
+
+	static Camera *getCamera();
+
 private:
+	static Camera *camera;
+
 	glm::mat4 O;
 	glm::mat4 V;
 	glm::mat4 P;

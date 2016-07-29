@@ -32,7 +32,6 @@ bool Texture::load(const string& fileName, GLuint minFilter, GLuint magFilter)
 
 	int w = FreeImage_GetWidth(imagen);
 	int h = FreeImage_GetHeight(imagen);
-	cout << "The size of the image is: " << fileName << " es " << w << "*" << h << endl; //Some debugging code
 
 	this->width = w;
 	this->height = h;
@@ -74,4 +73,14 @@ void Texture::bind(GLenum textureUnit)
 bool Texture::isValid()
 {
 	return valid;
+}
+
+int Texture::getWidth()
+{
+	return width;
+}
+
+int Texture::getHeight()
+{
+	return height;
 }

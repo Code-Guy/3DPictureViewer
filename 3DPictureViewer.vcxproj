@@ -76,6 +76,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="camera.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_mainwidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -90,6 +91,9 @@
     </ClCompile>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwidget.cpp" />
+    <ClCompile Include="picture.cpp" />
+    <ClCompile Include="pictureshader.cpp" />
+    <ClCompile Include="shader.cpp" />
     <ClCompile Include="texture.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -117,7 +121,11 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
     <ClInclude Include="GeneratedFiles\ui_mainwidget.h" />
+    <ClInclude Include="picture.h" />
+    <ClInclude Include="pictureshader.h" />
+    <ClInclude Include="shader.h" />
     <ClInclude Include="texture.h" />
   </ItemGroup>
   <ItemGroup>
