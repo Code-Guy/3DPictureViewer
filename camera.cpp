@@ -3,8 +3,6 @@
 const float OrthoSize = 10.0f;
 const float PitchClampOffset = 1.0f;
 
-Camera *Camera::camera = NULL;
-
 Camera::Camera(glm::vec3 pos, glm::vec3 target, glm::vec3 worldUp, float aspectRatio,
 	float fov, float nearDist, float farDist)
 	: pos(pos), view(glm::normalize(target - pos)), worldUp(worldUp), aspectRatio(aspectRatio),
@@ -45,22 +43,6 @@ glm::mat4 Camera::getProjMatrix()
 glm::mat4 Camera::getViewProjMatrix()
 {
 	return VP;
-}
-
-void Camera::setCamera(glm::vec3 pos, glm::vec3 target, glm::vec3 worldUp, float aspectRatio,
-	float fov, float nearDist, float farDist)
-{
-	camera = new Camera(pos, target, worldUp, aspectRatio, fov, nearDist, farDist);
-}
-
-Camera *Camera::getCamera()
-{
-	return camera;
-}
-
-void Camera::destoryCamera()
-{
-	delete camera;
 }
 
 void Camera::updateCameraVectors()

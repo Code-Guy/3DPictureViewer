@@ -3,6 +3,7 @@
 
 #include "texture.h"
 #include "pictureshader.h"
+#include "shadowmapshader.h"
 
 #include <glm/glm.hpp>
    
@@ -27,7 +28,8 @@ public:
 	void addPosition(glm::vec3 pos);
 	void addRotation(glm::vec3 rot);
 
-	void render(PictureShader *pictureShader);
+	void renderPass(PictureShader *pictureShader);
+	void shadowMapPass(ShadowMapShader *shadowMapShader);
 
 private:
 	Texture *texture;
@@ -43,7 +45,7 @@ private:
 	glm::vec3 translation;
 	glm::vec3 rotation;
 
-	glm::mat4 getModelMatrix();
+	glm::mat4 getModelMatrix(glm::vec3 t, glm::vec3 r, float s);
 };
 
 #endif //_PICTURE_H

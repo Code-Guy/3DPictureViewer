@@ -5,6 +5,8 @@
 #include <string>
 #include <GL/glew.h>
 
+#define INVALID_UNIFORM_LOCATION 0xffffffff
+
 typedef std::list<GLuint> ShaderObjList;
 
 class Shader

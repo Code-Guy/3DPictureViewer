@@ -28,13 +28,25 @@ bool PictureShader::init()
 	}
 
 	MVPLocation = getUniformLocation("MVP");
-	if (MVPLocation == 0xffffffff) 
+	if (MVPLocation == INVALID_UNIFORM_LOCATION) 
+	{
+		return false;
+	}
+
+	LightMVPLocation = getUniformLocation("LightMVP");
+	if (LightMVPLocation == INVALID_UNIFORM_LOCATION)
 	{
 		return false;
 	}
 
 	TextureMapLocation = getUniformLocation("TextureMap");
-	if (TextureMapLocation == 0xffffffff)
+	if (TextureMapLocation == INVALID_UNIFORM_LOCATION)
+	{
+		return false;
+	}
+
+	ShadowMapLocation = getUniformLocation("ShadowMap");
+	if (ShadowMapLocation == INVALID_UNIFORM_LOCATION)
 	{
 		return false;
 	}
@@ -47,7 +59,17 @@ void PictureShader::setMVP(glm::mat4 MVP)
 	glUniformMatrix4fv(MVPLocation, 1, false, glm::value_ptr(MVP));
 }
 
+void PictureShader::setLightMVP(glm::mat4 LightMVP)
+{
+	glUniformMatrix4fv(LightMVPLocation, 1, false, glm::value_ptr(LightMVP));
+}
+
 void PictureShader::setTextureMap(unsigned int TextureMap)
 {
 	glUniform1i(TextureMapLocation, TextureMap);
+}
+
+void PictureShader::setShadowMap(unsigned int ShadowMap)
+{
+	glUniform1i(ShadowMapLocation, ShadowMap);
 }

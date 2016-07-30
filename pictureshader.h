@@ -13,11 +13,17 @@ public:
 	virtual bool init();
 
 	void setMVP(glm::mat4 MVP);
+	void setLightMVP(glm::mat4 LightMVP);
+
 	void setTextureMap(unsigned int TextureMap);
+	void setShadowMap(unsigned int ShadowMap);
 
 private:
 	GLuint MVPLocation;
+	GLuint LightMVPLocation;
+
 	GLuint TextureMapLocation;
+	GLuint ShadowMapLocation;
 };
 
 #endif //_PICTURESHADER_H

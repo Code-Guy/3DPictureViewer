@@ -11,7 +11,7 @@ const int MSAA = 4;
 const int WIDTH = 1280;
 const int HEIGHT = 960;
 
-MainWidget::MainWidget(QWidget *parent)
+MainWidget::MainWidget(int fps, QWidget *parent)
 	: QWidget(parent)
 {
 	ui.setupUi(this);
@@ -22,15 +22,22 @@ MainWidget::MainWidget(QWidget *parent)
 	initGlew();
 	initGLStates();
 
+	//设置绘制计时器
+	connect(&drawTimer, SIGNAL(timeout()), this, SLOT(update()));
+	drawTimer.start(1000 / fps);
+
 	//初始化FPS计时器
 	fpsTime = new QTime;
 	fpsTime->start();
 
+	Scene::initSingletons(WIDTH, HEIGHT);
 	scene = new Scene(WIDTH, HEIGHT);
 }
 
 MainWidget::~MainWidget()
 {
+	Scene::destorySingletons();
+
 	delete fpsTime;
 	delete scene;
 
@@ -45,8 +52,6 @@ void MainWidget::logic(float deltaTime)
 
 void MainWidget::render()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	scene->render();
 }
 
@@ -61,8 +66,6 @@ void MainWidget::paintEvent(QPaintEvent* evt)
 	HDC hdc = GetDC(hwnd);
 	SwapBuffers(hdc);
 	ReleaseDC(hwnd, hdc);
-
-	update();
 }
 
 void MainWidget::initWidgetProp()//初始化widget的一些属性

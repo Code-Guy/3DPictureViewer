@@ -1,5 +1,7 @@
 #include "picture.h"
-#include "camera.h"
+#include "scene.h"
+
+const float ShadowMapDepthOffset = -0.05f;
 
 Picture::Picture(std::string fileName)
 {
@@ -99,28 +101,44 @@ void Picture::addRotation(glm::vec3 rot)
 	}
 }
 
-void Picture::render(PictureShader *pictureShader)
+void Picture::renderPass(PictureShader *pictureShader)
 {
 	glBindVertexArray(vao);
 
-	glm::mat4 M = getModelMatrix();
-	glm::mat4 VP = Camera::getCamera()->getViewProjMatrix();
+	glm::mat4 M = getModelMatrix(translation, rotation, size);
+	glm::mat4 VP = Scene::getCamera()->getViewProjMatrix();
+	glm::mat4 LightVP = Scene::getLight()->getOrthoViewMatrix();
 
-	pictureShader->enable();
-	pictureShader->setMVP(VP * M);
 	texture->bind(GL_TEXTURE0);
+
+	pictureShader->setMVP(VP * M);
+	pictureShader->setLightMVP(LightVP * M);
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
 }
 
-glm::mat4 Picture::getModelMatrix()
+void Picture::shadowMapPass(ShadowMapShader *shadowMapShader)
 {
-	glm::mat4 T = glm::translate(translation);
-	glm::mat4 R = glm::rotate(rotation.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
-		glm::rotate(rotation.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
-		glm::rotate(rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+	glBindVertexArray(vao);
+
+	glm::mat4 M = getModelMatrix(translation + glm::vec3(0, 0, ShadowMapDepthOffset), rotation, size);
+	glm::mat4 LightVP = Scene::getLight()->getOrthoViewMatrix();
+
+	shadowMapShader->setLightMVP(LightVP * M);
+
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+	glBindVertexArray(0);
+}
+
+glm::mat4 Picture::getModelMatrix(glm::vec3 t, glm::vec3 r, float s)
+{
+	glm::mat4 T = glm::translate(t);
+	glm::mat4 R = glm::rotate(r.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
+		glm::rotate(r.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
+		glm::rotate(r.z, glm::vec3(0.0f, 0.0f, 1.0f));
 
 	glm::vec3 scale;
 	scale.z = 1.0f;
@@ -129,13 +147,13 @@ glm::mat4 Picture::getModelMatrix()
 	int imgH = texture->getHeight();
 	if (imgW > imgH)
 	{
-		scale.x = size;
-		scale.y = size * imgH / imgW;
+		scale.x = s;
+		scale.y = s * imgH / imgW;
 	}
 	else
 	{
-		scale.y = size;
-		scale.x = size * imgW / imgH;
+		scale.y = s;
+		scale.x = s * imgW / imgH;
 	}
 
 	glm::mat4 S = glm::scale(scale);

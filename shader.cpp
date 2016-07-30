@@ -133,7 +133,7 @@ GLint Shader::getUniformLocation(const char* pUniformName)
 {
 	GLuint Location = glGetUniformLocation(shaderProg, pUniformName);
 
-	if (Location == 0xffffffff) 
+	if (Location == INVALID_UNIFORM_LOCATION) 
 	{
 		printf("Warning! Unable to get the location of uniform '%s'\n", pUniformName);
 	}

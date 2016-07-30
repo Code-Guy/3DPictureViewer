@@ -13,7 +13,7 @@ class MainWidget : public QWidget
 	Q_OBJECT
 
 public:
-	MainWidget(QWidget *parent = 0);
+	MainWidget(int fps = 60, QWidget *parent = 0);
 	~MainWidget();
 
 protected:
@@ -37,6 +37,7 @@ private:
 
 	void tickClock();
 
+	QTimer drawTimer;//帧刷新计时器
 	QTime *fpsTime;//FPS计时器
 	float deltaTime;//上一帧绘制所需要的之间
 
