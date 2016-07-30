@@ -1,5 +1,6 @@
 #include "mainwidget.h"
 #include <QMessageBox>
+#include <QWheelEvent>
 #include <GL/glew.h>
 #include <GL/wglext.h>
 #include <Windows.h>
@@ -57,7 +58,7 @@ void MainWidget::render()
 
 void MainWidget::paintEvent(QPaintEvent* evt)
 {
-	tickClock();
+	tick();
 
 	logic(deltaTime);
 	render();
@@ -66,6 +67,12 @@ void MainWidget::paintEvent(QPaintEvent* evt)
 	HDC hdc = GetDC(hwnd);
 	SwapBuffers(hdc);
 	ReleaseDC(hwnd, hdc);
+}
+
+void MainWidget::wheelEvent(QWheelEvent *evt)
+{
+	int numSteps = evt->delta() / 120;//滚动的步数
+	Scene::getCamera()->scroll(numSteps);
 }
 
 void MainWidget::initWidgetProp()//初始化widget的一些属性
@@ -281,7 +288,7 @@ bool MainWidget::wglIsExtensionSupported(const char *extension)
 	}
 }
 
-void MainWidget::tickClock()
+void MainWidget::tick()
 {
 	deltaTime = fpsTime->elapsed();
 	deltaTime /= 1000.0f;

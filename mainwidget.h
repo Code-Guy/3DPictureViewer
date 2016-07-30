@@ -22,6 +22,7 @@ protected:
 
 	virtual QPaintEngine* paintEngine() const { return NULL; } //避免界面闪烁
 	virtual void paintEvent(QPaintEvent* evt);
+	virtual void wheelEvent(QWheelEvent *evt);
 
 private:
 	Ui::MainWidgetClass ui;
@@ -35,7 +36,7 @@ private:
 	bool setMultisample(HWND hWnd, int sampleNum, int &pixelFormat);
 	bool wglIsExtensionSupported(const char *extension);
 
-	void tickClock();
+	void tick();
 
 	QTimer drawTimer;//帧刷新计时器
 	QTime *fpsTime;//FPS计时器

@@ -1,7 +1,7 @@
 #include "picture.h"
 #include "scene.h"
 
-const float ShadowMapDepthOffset = -0.05f;
+const float ShadowMapDepthOffset = -0.08f;
 
 Picture::Picture(std::string fileName)
 {

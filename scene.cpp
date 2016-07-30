@@ -1,16 +1,22 @@
 #include "scene.h"
 #include "camera.h"
+#include "tool.h"
 
 Camera *Scene::camera = NULL;
 DirectionLight *Scene::light = NULL;
 
+using namespace std;
+
 Scene::Scene(int width, int height)
 {
-	Picture *bgPicture = new Picture("Resources/pictures/white.jpg");
+	Picture *bgPicture = new Picture("Resources/bg/white.jpg");
 	bgPicture->setPosition(glm::vec3(0, 0, -0.5f));
-	bgPicture->setSize(100);
+	bgPicture->setSize(15);
 
-	Picture *displayPicture = new Picture("Resources/pictures/aurora.jpg");
+	vector<string> picturePaths;
+	Tool::traverseFilesInDirectory("Resources/pictures", picturePaths, true);
+
+	Picture *displayPicture = new Picture(picturePaths.back());
 
 	pictures.push_back(bgPicture);
 	pictures.push_back(displayPicture);
