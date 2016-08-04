@@ -6,7 +6,8 @@ enum CurveShape
 	LinearCurve, 
 	EaseInCurve,
 	EaseOutCurve,
-	EaseInOutCurve
+	EaseInOutCurve,
+	BounceCurve
 };
 
 class Action
@@ -23,6 +24,7 @@ public:
 	void setTimeInterval(float timeInterval);
 	void setCurveShape(CurveShape curveShape);
 
+	CurveShape getCurveShape();
 	float getValue();
 	float getDeltaValue();
 
@@ -44,6 +46,7 @@ private:
 	void easeIn();
 	void easeOut();
 	void easeInOut();
+	void bounce();
 };
 
 #endif //_ACTION_H

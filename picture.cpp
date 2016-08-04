@@ -11,6 +11,7 @@ Picture::Picture(std::string fileName)
 
 	position = glm::vec3();
 	angle = 0;
+	isVisible = false;
 
 	setSize(1.0f);
 

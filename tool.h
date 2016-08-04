@@ -5,6 +5,8 @@
 #include <string>
 #include <glm/glm.hpp>
 
+#define MAX_NUM 1e6
+
 class Tool
 {
 public:

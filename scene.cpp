@@ -11,9 +11,11 @@ using namespace std;
 
 const int ShadowMapSize = 2048;
 const float SpanDistance = 2.5f;
-const float MouseMoveSensitiy = 0.05f;
-const float MouseEaseOutSensitiy = 0.2f;
-const float MouseEaseOutSpeed = 5.0f;
+const float MouseMoveSensitiy = 0.02f;
+const float MouseEaseOutSensitiy = 1.0f;
+const float MouseEaseOutSpeed = 30.0f;
+const float BounceTimeInterval = 1.0f;
+const int MaxVisiblePictureNum = 6;
 
 Scene::Scene(int width, int height)
 {
@@ -62,14 +64,24 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 		lastDeltaMousePosX = deltaMousePosX;
 		actions.clear();
 
-		deltaAngle = deltaMousePosX * MouseMoveSensitiy;
+		deltaAngle = -deltaMousePosX * MouseMoveSensitiy;
 	}
-
-	if (!actions.empty())
+	else if (!actions.empty())
 	{
 		Action &action = actions.front();
 		if (!action.isRunning())
 		{
+			if (action.getCurveShape() == EaseOutCurve)
+			{
+				Action bounceAction;
+				bounceAction.setBaseValue(0);
+				float centerPictureAngle = getCenterPictureAngle();
+				bounceAction.setIncrementValue(-centerPictureAngle);
+				bounceAction.setTimeInterval(BounceTimeInterval);
+				bounceAction.setCurveShape(BounceCurve);
+				bounceAction.start();
+				actions.push_back(bounceAction);
+			}
 			actions.pop_front();
 		}
 		else
@@ -81,10 +93,15 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 
 	float upBoundAngle = spanAngle * (pictures.size() / 2);
 	float backAngle = spanAngle * pictures.size();
+	float invisibleAngle = MaxVisiblePictureNum / 2 * spanAngle;
 
 	for (auto picture : pictures)
 	{
-		picture->addAngle(-deltaAngle);
+		picture->addAngle(deltaAngle);
+		if (abs(picture->getAngle()) < invisibleAngle)
+		{
+			picture->setVisible(true);
+		}
 		if (picture->getAngle() > upBoundAngle)
 		{
 			picture->addAngle(-backAngle);
@@ -125,8 +142,8 @@ void Scene::addEaseOutAction()
 	Action action;
 	action.setBaseValue(0);
 	float mouseEaseOutAngle = lastDeltaMousePosX * MouseEaseOutSensitiy;
-	action.setIncrementValue(mouseEaseOutAngle);
-	action.setTimeInterval(mouseEaseOutAngle / MouseEaseOutSpeed);
+	action.setIncrementValue(-mouseEaseOutAngle);
+	action.setTimeInterval(abs(mouseEaseOutAngle / MouseEaseOutSpeed));
 	action.setCurveShape(EaseOutCurve);
 	action.start();
 	actions.push_back(action);
@@ -162,6 +179,7 @@ void Scene::genPictures()
 	bgPicture = new Picture("Resources/bg/white.jpg");
 	bgPicture->setPosition(glm::vec3(0, 0, -2.0f));
 	bgPicture->setSize(7);
+	bgPicture->setVisible(true);
 
 	vector<string> picturePaths;
 	Tool::traverseFilesInDirectory("Resources/pictures", picturePaths, true);
@@ -181,4 +199,18 @@ void Scene::genPictures()
 
 		pictures.push_back(picture);
 	}
+}
+
+float Scene::getCenterPictureAngle()
+{
+	float centerPictureAngle = MAX_NUM;
+	for (auto picture : pictures)
+	{
+		if (abs(picture->getAngle()) < abs(centerPictureAngle))
+		{
+			centerPictureAngle = picture->getAngle();
+		}
+	}
+
+	return centerPictureAngle;
 }
