@@ -4,7 +4,7 @@
 #include <Windows.h>
 
 const int MAX_PATH_LEN = 1024;
-const float FLOAT_EQUAL_EPSILON = 0.0001f;
+const float FLOAT_EQUAL_EPSILON = 0.001f;
 
 using namespace std;
 
@@ -93,6 +93,53 @@ QImage Tool::blur(std::string imagePath, int r, float alpha)
 	}
 
 	return QImage(dstBits, w, h, QImage::Format_RGBA8888);
+}
+
+void Tool::blur(unsigned char *srcBits, unsigned char *&dstBits, int w, int h, int r)
+{
+	int len = w * h;
+	dstBits = new unsigned char[len * 4];
+
+	int *srcRed = new int[len];
+	int *srcGreen = new int[len];
+	int *srcBlue = new int[len];
+	int *srcAlpha = new int[len];
+
+	int *dstRed = new int[len];
+	int *dstGreen = new int[len];
+	int *dstBlue = new int[len];
+	int *dstAlpha = new int[len];
+
+	for (int i = 0; i < len; i++)
+	{
+		srcRed[i] = srcBits[i * 4];
+		srcGreen[i] = srcBits[i * 4 + 1];
+		srcBlue[i] = srcBits[i * 4 + 2];
+		srcAlpha[i] = srcBits[i * 4 + 3];
+	}
+
+	fastGaussainBlur(srcRed, dstRed, w, h, r);
+	fastGaussainBlur(srcGreen, dstGreen, w, h, r);
+	fastGaussainBlur(srcBlue, dstBlue, w, h, r);
+
+	for (int i = 0; i < len; i++)
+	{
+		dstBits[i * 4] = (unsigned char)dstRed[i];
+		dstBits[i * 4 + 1] = (unsigned char)dstGreen[i];
+		dstBits[i * 4 + 2] = (unsigned char)dstBlue[i];
+		dstBits[i * 4 + 3] = (unsigned char)srcAlpha[i];
+	}
+}
+
+void Tool::blend(unsigned char *lhs, unsigned char *rhs, unsigned char *&ret, int w, int h, float alpha)
+{
+	int len = w * h;
+	ret = new unsigned char[len * 4];
+
+	for (int i = 0; i < len * 4; i++)
+	{
+		ret[i] = lhs[i] * alpha + rhs[i] * (1 - alpha);
+	}
 }
 
 void Tool::gaussainBlur(int *scl, int *tcl, int w, int h, int r)

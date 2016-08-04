@@ -12,6 +12,7 @@ Picture::Picture(std::string fileName)
 	position = glm::vec3();
 	angle = 0;
 	isVisible = false;
+	isBlur = false;
 
 	setSize(1.0f);
 
@@ -91,6 +92,26 @@ float Picture::getAngle()
 	return angle;
 }
 
+int Picture::getWidth()
+{
+	return texture->getWidth();
+}
+
+int Picture::getHeight()
+{
+	return texture->getHeight();
+}
+
+unsigned char *Picture::getBits()
+{
+	return texture->getBits();
+}
+
+void Picture::setBits(unsigned char *bits, int w, int h)
+{
+	texture->setBits(bits, w, h);
+}
+
 void Picture::setRadius(float radius)
 {
 	Picture::radius = radius;
@@ -115,6 +136,7 @@ void Picture::renderPass(PictureShader *pictureShader)
 
 		pictureShader->setMVP(VP * M);
 		pictureShader->setLightMVP(LightVP * M);
+		pictureShader->setBlur(isBlur);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -142,6 +164,11 @@ void Picture::shadowMapPass(ShadowMapShader *shadowMapShader)
 void Picture::setVisible(bool isVisible)
 {
 	this->isVisible = isVisible;
+}
+
+void Picture::setBlur(bool isBlur)
+{
+	this->isBlur = isBlur;
 }
 
 glm::mat4 Picture::getModelMatrix()

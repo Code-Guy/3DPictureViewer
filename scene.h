@@ -21,7 +21,7 @@ public:
 	void logic(float deltaTime, int deltaMousePosX);
 	void render();
 
-	void addEaseOutAction();
+	void addAction();
 
 	static void initSingletons(int width, int height);
 	static void destorySingletons();
@@ -45,10 +45,12 @@ private:
 
 	float lastDeltaMousePosX;
 
+	int centerPictureIndex;
+	float centerPictureAngle;
+
 	std::deque<Action> actions;
 
 	void genPictures();
-	int getCenterPictureAngle(float &angle);
 };
 
 #endif //_SCENE_H

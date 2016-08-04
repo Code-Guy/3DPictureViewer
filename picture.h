@@ -24,12 +24,18 @@ public:
 	void setSize(float size);
 
 	float getAngle();
+	int getWidth();
+	int getHeight();
+	unsigned char *getBits();
+	void setBits(unsigned char *bits, int w, int h);
+
 	void addAngle(float angle);
 
 	void renderPass(PictureShader *pictureShader);
 	void shadowMapPass(ShadowMapShader *shadowMapShader);
 
 	void setVisible(bool isVisible);
+	void setBlur(bool isBlur);
 
 	static void setRadius(float radius);
 
@@ -48,6 +54,7 @@ private:
 	float angle;
 
 	bool isVisible;
+	bool isBlur;
 
 	static float radius;
 

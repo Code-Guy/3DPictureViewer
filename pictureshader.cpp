@@ -51,6 +51,12 @@ bool PictureShader::init()
 		return false;
 	}
 
+	IsBlurLocation = getUniformLocation("IsBlur");
+	if (IsBlurLocation == INVALID_UNIFORM_LOCATION)
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -72,4 +78,9 @@ void PictureShader::setTextureMap(unsigned int TextureMap)
 void PictureShader::setShadowMap(unsigned int ShadowMap)
 {
 	glUniform1i(ShadowMapLocation, ShadowMap);
+}
+
+void PictureShader::setBlur(bool flag)
+{
+	glUniform1i(IsBlurLocation, flag);
 }

@@ -10,14 +10,16 @@ PointLight *Scene::light = NULL;
 using namespace std;
 
 const int ShadowMapSize = 2048;
-const float SpanDistance = 3.0f;
+const float SpanDistance = 3.5f;
 const float MouseMoveSensitiy = 0.02f;
-const float MouseEaseOutSensitiy = 1.0f;
-const float MouseEaseOutSpeed = 50.0f;
+const float MouseEaseOutBound = 5.0f;
+const float MouseEaseOutSensitiy = 0.5f;
+const float MouseEaseOutSpeed = 100.0f;
 const float BounceTimeInterval = 0.8f;
 const int MaxVisiblePictureNum = 6;
 const float ScaleAngle = 10.0f;
 const float CenterScale = 1.8f;
+const float CenterAlpha = 0.3f;
 
 Scene::Scene(int width, int height)
 {
@@ -77,8 +79,6 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 			{
 				Action bounceAction;
 				bounceAction.setBaseValue(0);
-				float centerPictureAngle;
-				getCenterPictureAngle(centerPictureAngle);
 				bounceAction.setIncrementValue(-centerPictureAngle);
 				bounceAction.setTimeInterval(BounceTimeInterval);
 				bounceAction.setCurveShape(BounceCurve);
@@ -98,6 +98,8 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 	float backAngle = spanAngle * pictures.size();
 	float invisibleAngle = MaxVisiblePictureNum / 2 * spanAngle;
 
+	centerPictureAngle = MAX_NUM;
+	int index = 0;
 	for (auto picture : pictures)
 	{
 		picture->addAngle(deltaAngle);
@@ -114,15 +116,22 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 		{
 			picture->setVisible(true);
 		}
+
+		if (abs(picture->getAngle()) < abs(centerPictureAngle))
+		{
+			centerPictureAngle = picture->getAngle();
+			centerPictureIndex = index;
+		}
+		index++;
 	}
 
-	int centerPictureIndex;
-	float centerPictureAngle;
-	centerPictureIndex = getCenterPictureAngle(centerPictureAngle);
-	if (abs(centerPictureAngle) < ScaleAngle)
+	if (!Tool::isFloatEqual(centerPictureAngle, 0) && abs(centerPictureAngle) < ScaleAngle)
 	{
 		float size = (1 - CenterScale) / ScaleAngle * abs(centerPictureAngle) + CenterScale;
-		pictures[centerPictureIndex]->setSize(size);
+		Picture *centerPicture = pictures[centerPictureIndex];
+		centerPicture->setSize(size);
+		float alpha = -CenterAlpha * abs(centerPictureAngle) / ScaleAngle + CenterAlpha;
+		bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
 	}
 }
 
@@ -150,7 +159,7 @@ void Scene::render()
 	}
 }
 
-void Scene::addEaseOutAction()
+void Scene::addAction()
 {
 	if (lastDeltaMousePosX != 0)
 	{
@@ -172,7 +181,7 @@ void Scene::initSingletons(int width, int height)
 	camera = new Camera(glm::vec3(0, 0, 4), glm::vec3(), glm::vec3(0, 1, 0), (float)width / height);
 
 	light = new PointLight;
-	light->position = glm::vec3(0.0f, 0.5f, 5.5f);
+	light->position = glm::vec3(0.0f, 1.5f, 5.5f);
 	light->target = glm::vec3();
 }
 
@@ -195,8 +204,8 @@ PointLight *Scene::getLight()
 void Scene::genPictures()
 {
 	bgPicture = new Picture("Resources/bg/white.jpg");
-	bgPicture->setPosition(glm::vec3(0, 0, -2.0f));
-	bgPicture->setSize(7);
+	bgPicture->setPosition(glm::vec3(0, 0, -1.0f));
+	bgPicture->setSize(6);
 	bgPicture->setVisible(true);
 
 	vector<string> picturePaths;
@@ -219,23 +228,8 @@ void Scene::genPictures()
 		pictures.push_back(picture);
 	}
 
-	//QImage image = Tool::blur("Resources/pictures/ÁúÃ¨.jpeg", 20, 0.3);
-	//image.save("Resources/blur.jpg");
-}
-
-int Scene::getCenterPictureAngle(float &angle)
-{
-	angle = MAX_NUM;
-	int centerPictureIndex = -1;
-	for (int i = 0; i < pictures.size(); i++)
-	{
-		Picture *picture = pictures[i];
-		if (abs(picture->getAngle()) < abs(angle))
-		{
-			angle = picture->getAngle();
-			centerPictureIndex = i;
-		}
-	}
-
-	return centerPictureIndex;
+	Picture *centerPicture = pictures[n / 2];
+	centerPicture->setSize(CenterScale);
+	bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
+	bgPicture->setBlur(true);
 }

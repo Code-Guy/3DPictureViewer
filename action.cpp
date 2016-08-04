@@ -1,5 +1,8 @@
 #include "action.h"
 #include <cstdio>
+#include <algorithm>
+
+const float MinTimeInterval = 0.02f;
 
 Action::Action()
 {
@@ -72,7 +75,7 @@ void Action::setIncrementValue(float incrementVal)
 
 void Action::setTimeInterval(float timeInterval)
 {
-	this->timeInterval = timeInterval;
+	this->timeInterval = std::max(timeInterval, MinTimeInterval);
 }
 
 void Action::setCurveShape(CurveShape curveShape)

@@ -15,6 +15,8 @@ public:
 	static bool isFloatEqual(float lhs, float rhs);
 	static void clamp(float &val, float bottom, float up);
 	static QImage blur(std::string imagePath, int r, float alpha);
+	static void blur(unsigned char *srcBits, unsigned char *&dstBits, int w, int h, int r);
+	static void blend(unsigned char *lhs, unsigned char *rhs, unsigned char *&ret, int w, int h, float alpha);
 
 private:
 	static void gaussainBlur(int *scl, int *tcl, int w, int h, int r);

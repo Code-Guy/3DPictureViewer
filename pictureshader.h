@@ -17,6 +17,7 @@ public:
 
 	void setTextureMap(unsigned int TextureMap);
 	void setShadowMap(unsigned int ShadowMap);
+	void setBlur(bool flag);
 
 private:
 	GLuint MVPLocation;
@@ -24,6 +25,8 @@ private:
 
 	GLuint TextureMapLocation;
 	GLuint ShadowMapLocation;
+
+	GLuint IsBlurLocation;
 };
 
 #endif //_PICTURESHADER_H

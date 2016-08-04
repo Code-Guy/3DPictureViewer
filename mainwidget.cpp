@@ -93,7 +93,7 @@ void MainWidget::mousePressEvent(QMouseEvent *evt)
 void MainWidget::mouseReleaseEvent(QMouseEvent *evt)
 {
 	isMousePress = false;
-	scene->addEaseOutAction();
+	scene->addAction();
 }
 
 void MainWidget::initWidgetProp()//初始化widget的一些属性

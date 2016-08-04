@@ -7,6 +7,47 @@ out vec4 FragColor;
 
 uniform sampler2D TextureMap;
 uniform sampler2DShadow ShadowMap;
+uniform bool IsBlur = false;
+
+float normpdf(float x, float sigma)
+{
+	return 0.39894*exp(-0.5*x*x/(sigma*sigma))/sigma;
+}
+
+void GaussianBlur()
+{
+	const int mSize = 9;
+	const int kSize = (mSize-1)/2;
+	float kernel[mSize];
+	vec3 final_colour = vec3(0.0);
+		
+	//create the 1-D kernel
+	float sigma = 7.0;
+	float Z = 0.0;
+	for (int j = 0; j <= kSize; ++j)
+	{
+		kernel[kSize+j] = kernel[kSize-j] = normpdf(float(j), sigma);
+	}
+
+	//get the normalization factor (as the gaussian has been clamped)
+	for (int j = 0; j < mSize; ++j)
+	{
+		Z += kernel[j];
+	}
+	
+	vec2 resolution = textureSize(TextureMap, 0);
+	//read out the texels
+	for (int i=-kSize; i <= kSize; ++i)
+	{
+		for (int j=-kSize; j <= kSize; ++j)
+		{
+			final_colour += kernel[kSize+j] * kernel[kSize+i] * texture2D(TextureMap, FragTexCoord + vec2(float(i), float(j)) / resolution).rgb;
+		}
+	}
+
+	FragColor = vec4(final_colour/(Z*Z), texture(TextureMap, FragTexCoord).a);
+	FragColor.rgb = FragColor.rgb * 0.4f + vec3(1, 1, 1) * 0.6f;
+}
 
 float CalcShadowFactor()                                                  
 {   
@@ -38,5 +79,10 @@ float CalcShadowFactor()
 
 void main()
 {
-	FragColor = texture(TextureMap, FragTexCoord) * CalcShadowFactor();
+	if(IsBlur)
+		GaussianBlur();
+	else
+		FragColor = texture(TextureMap, FragTexCoord);
+
+	FragColor *= CalcShadowFactor();
 }
