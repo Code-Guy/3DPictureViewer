@@ -48,7 +48,7 @@ private:
 	std::deque<Action> actions;
 
 	void genPictures();
-	float getCenterPictureAngle();
+	int getCenterPictureAngle(float &angle);
 };
 
 #endif //_SCENE_H

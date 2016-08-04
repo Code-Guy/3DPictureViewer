@@ -99,6 +99,7 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *evt)
 void MainWidget::initWidgetProp()//初始化widget的一些属性
 {
 	setWindowOpacity(1);
+	setWindowTitle(tr("3D Picture Viewer"));
 	setAttribute(Qt::WA_OpaquePaintEvent);
 	setAttribute(Qt::WA_PaintOnScreen);
 	setAttribute(Qt::WA_InputMethodEnabled);

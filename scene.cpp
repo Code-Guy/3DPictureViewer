@@ -10,12 +10,14 @@ PointLight *Scene::light = NULL;
 using namespace std;
 
 const int ShadowMapSize = 2048;
-const float SpanDistance = 2.5f;
+const float SpanDistance = 3.0f;
 const float MouseMoveSensitiy = 0.02f;
 const float MouseEaseOutSensitiy = 1.0f;
-const float MouseEaseOutSpeed = 30.0f;
-const float BounceTimeInterval = 1.0f;
+const float MouseEaseOutSpeed = 50.0f;
+const float BounceTimeInterval = 0.8f;
 const int MaxVisiblePictureNum = 6;
+const float ScaleAngle = 10.0f;
+const float CenterScale = 1.8f;
 
 Scene::Scene(int width, int height)
 {
@@ -75,7 +77,8 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 			{
 				Action bounceAction;
 				bounceAction.setBaseValue(0);
-				float centerPictureAngle = getCenterPictureAngle();
+				float centerPictureAngle;
+				getCenterPictureAngle(centerPictureAngle);
 				bounceAction.setIncrementValue(-centerPictureAngle);
 				bounceAction.setTimeInterval(BounceTimeInterval);
 				bounceAction.setCurveShape(BounceCurve);
@@ -98,10 +101,6 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 	for (auto picture : pictures)
 	{
 		picture->addAngle(deltaAngle);
-		if (abs(picture->getAngle()) < invisibleAngle)
-		{
-			picture->setVisible(true);
-		}
 		if (picture->getAngle() > upBoundAngle)
 		{
 			picture->addAngle(-backAngle);
@@ -110,6 +109,20 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 		{
 			picture->addAngle(backAngle);
 		}
+
+		if (abs(picture->getAngle()) < invisibleAngle)
+		{
+			picture->setVisible(true);
+		}
+	}
+
+	int centerPictureIndex;
+	float centerPictureAngle;
+	centerPictureIndex = getCenterPictureAngle(centerPictureAngle);
+	if (abs(centerPictureAngle) < ScaleAngle)
+	{
+		float size = (1 - CenterScale) / ScaleAngle * abs(centerPictureAngle) + CenterScale;
+		pictures[centerPictureIndex]->setSize(size);
 	}
 }
 
@@ -139,14 +152,19 @@ void Scene::render()
 
 void Scene::addEaseOutAction()
 {
-	Action action;
-	action.setBaseValue(0);
-	float mouseEaseOutAngle = lastDeltaMousePosX * MouseEaseOutSensitiy;
-	action.setIncrementValue(-mouseEaseOutAngle);
-	action.setTimeInterval(abs(mouseEaseOutAngle / MouseEaseOutSpeed));
-	action.setCurveShape(EaseOutCurve);
-	action.start();
-	actions.push_back(action);
+	if (lastDeltaMousePosX != 0)
+	{
+		Action action;
+		action.setBaseValue(0);
+		float mouseEaseOutAngle = lastDeltaMousePosX * MouseEaseOutSensitiy;
+		action.setIncrementValue(-mouseEaseOutAngle);
+		action.setTimeInterval(abs(mouseEaseOutAngle / MouseEaseOutSpeed));
+		action.setCurveShape(EaseOutCurve);
+		action.start();
+		actions.push_back(action);
+
+		lastDeltaMousePosX = 0;
+	}
 }
 
 void Scene::initSingletons(int width, int height)
@@ -183,6 +201,7 @@ void Scene::genPictures()
 
 	vector<string> picturePaths;
 	Tool::traverseFilesInDirectory("Resources/pictures", picturePaths, true);
+	//Tool::traverseFilesInDirectory("E:/Privacy/Í¼Æ¬/»ùÓÑÎ÷ºþÓÎ", picturePaths, true);
 
 	sort(picturePaths.begin(), picturePaths.end());
 
@@ -199,18 +218,24 @@ void Scene::genPictures()
 
 		pictures.push_back(picture);
 	}
+
+	//QImage image = Tool::blur("Resources/pictures/ÁúÃ¨.jpeg", 20, 0.3);
+	//image.save("Resources/blur.jpg");
 }
 
-float Scene::getCenterPictureAngle()
+int Scene::getCenterPictureAngle(float &angle)
 {
-	float centerPictureAngle = MAX_NUM;
-	for (auto picture : pictures)
+	angle = MAX_NUM;
+	int centerPictureIndex = -1;
+	for (int i = 0; i < pictures.size(); i++)
 	{
-		if (abs(picture->getAngle()) < abs(centerPictureAngle))
+		Picture *picture = pictures[i];
+		if (abs(picture->getAngle()) < abs(angle))
 		{
-			centerPictureAngle = picture->getAngle();
+			angle = picture->getAngle();
+			centerPictureIndex = i;
 		}
 	}
 
-	return centerPictureAngle;
+	return centerPictureIndex;
 }

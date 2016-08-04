@@ -4,7 +4,7 @@
 
 using namespace std;
 
-const int MaxSize = 1280;
+const int MaxSize = 800;
 
 Texture::Texture(const std::string& fileName, GLuint minFilter, GLuint magFilter)
 {
