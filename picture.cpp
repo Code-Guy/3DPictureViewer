@@ -1,15 +1,18 @@
 #include "picture.h"
 #include "scene.h"
 
-const float ShadowMapDepthOffset = -0.08f;
+float Picture::radius;
+
+const float ShadowMapDepthOffset = -0.01f;
 
 Picture::Picture(std::string fileName)
 {
 	texture = new Texture(fileName);
 
-	size = 1.0f;
-	translation = glm::vec3();
-	rotation = glm::vec3();
+	position = glm::vec3();
+	angle = 0;
+
+	setSize(1.0f);
 
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(3, buffers);
@@ -19,10 +22,10 @@ Picture::Picture(std::string fileName)
 	pos[2] = glm::vec3(-1.0f, -1.0f, 0.0f);
 	pos[3] = glm::vec3(1.0f, -1.0f, 0.0f);
 
-	texCoord[0] = glm::vec2(0.0f, 1.0f);
-	texCoord[1] = glm::vec2(1.0f, 1.0f);
-	texCoord[2] = glm::vec2(1.0f, 0.0f);
-	texCoord[3] = glm::vec2(0.0f, 0.0f);
+	texCoord[0] = glm::vec2(1.0f, 1.0f);
+	texCoord[1] = glm::vec2(0.0f, 1.0f);
+	texCoord[2] = glm::vec2(0.0f, 0.0f);
+	texCoord[3] = glm::vec2(1.0f, 0.0f);
 
 	indices[0] = 0;
 	indices[1] = 1;
@@ -59,104 +62,92 @@ Picture::~Picture()
 	delete texture;
 }
 
+void Picture::setPosition(glm::vec3 position)
+{
+	this->position = position;
+}
+
 void Picture::setSize(float size)
 {
-	this->size = size;
-}
-
-void Picture::setPosition(glm::vec3 pos)
-{
-	this->translation = pos;
-}
-
-void Picture::setRotation(glm::vec3 rot)
-{
-	this->rotation = rot;
-}
-
-void Picture::addSize(float size)
-{
-	this->size += size;
-}
-
-void Picture::addPosition(glm::vec3 pos)
-{
-	this->translation += pos;
-}
-
-void Picture::addRotation(glm::vec3 rot)
-{
-	this->rotation += rot;
-
-	for (auto &r : rotation)
-	{
-		if (r > 360)
-		{
-			r -= 360;
-		}
-		else if(r < 0)
-		{
-			r += 360;
-		}
-	}
-}
-
-void Picture::renderPass(PictureShader *pictureShader)
-{
-	glBindVertexArray(vao);
-
-	glm::mat4 M = getModelMatrix(translation, rotation, size);
-	glm::mat4 VP = Scene::getCamera()->getViewProjMatrix();
-	glm::mat4 LightVP = Scene::getLight()->getOrthoViewMatrix();
-
-	texture->bind(GL_TEXTURE0);
-
-	pictureShader->setMVP(VP * M);
-	pictureShader->setLightMVP(LightVP * M);
-
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-	glBindVertexArray(0);
-}
-
-void Picture::shadowMapPass(ShadowMapShader *shadowMapShader)
-{
-	glBindVertexArray(vao);
-
-	glm::mat4 M = getModelMatrix(translation + glm::vec3(0, 0, ShadowMapDepthOffset), rotation, size);
-	glm::mat4 LightVP = Scene::getLight()->getOrthoViewMatrix();
-
-	shadowMapShader->setLightMVP(LightVP * M);
-
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-	glBindVertexArray(0);
-}
-
-glm::mat4 Picture::getModelMatrix(glm::vec3 t, glm::vec3 r, float s)
-{
-	glm::mat4 T = glm::translate(t);
-	glm::mat4 R = glm::rotate(r.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
-		glm::rotate(r.x, glm::vec3(1.0f, 0.0f, 0.0f)) *
-		glm::rotate(r.z, glm::vec3(0.0f, 0.0f, 1.0f));
-
-	glm::vec3 scale;
-	scale.z = 1.0f;
+	scalar.z = 1.0f;
 
 	int imgW = texture->getWidth();
 	int imgH = texture->getHeight();
 	if (imgW > imgH)
 	{
-		scale.x = s;
-		scale.y = s * imgH / imgW;
+		scalar.x = size;
+		scalar.y = size * imgH / imgW;
 	}
 	else
 	{
-		scale.y = s;
-		scale.x = s * imgW / imgH;
+		scalar.y = size;
+		scalar.x = size * imgW / imgH;
 	}
+}
 
-	glm::mat4 S = glm::scale(scale);
+float Picture::getAngle()
+{
+	return angle;
+}
+
+void Picture::setRadius(float radius)
+{
+	Picture::radius = radius;
+}
+
+void Picture::addAngle(float angle)
+{
+	this->angle += angle;
+}
+
+void Picture::renderPass(PictureShader *pictureShader)
+{
+	if (isVisible)
+	{
+		glBindVertexArray(vao);
+
+		glm::mat4 M = getModelMatrix();
+		glm::mat4 VP = Scene::getCamera()->getViewProjMatrix();
+		glm::mat4 LightVP = Scene::getLight()->getProjViewMatrix();
+
+		texture->bind(GL_TEXTURE0);
+
+		pictureShader->setMVP(VP * M);
+		pictureShader->setLightMVP(LightVP * M);
+
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		glBindVertexArray(0);
+	}
+}
+
+void Picture::shadowMapPass(ShadowMapShader *shadowMapShader)
+{
+	if (isVisible)
+	{
+		glBindVertexArray(vao);
+
+		glm::mat4 M = glm::translate(glm::vec3(0, 0, ShadowMapDepthOffset)) * getModelMatrix();
+		glm::mat4 LightVP = Scene::getLight()->getProjViewMatrix();
+
+		shadowMapShader->setLightMVP(LightVP * M);
+
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		glBindVertexArray(0);
+	}
+}
+
+void Picture::setVisible(bool isVisible)
+{
+	this->isVisible = isVisible;
+}
+
+glm::mat4 Picture::getModelMatrix()
+{
+	glm::mat4 T = glm::translate(position + glm::vec3(-radius * sin(glm::radians(angle)), 0, radius * (1 - cos(glm::radians(angle)))));
+	glm::mat4 R = glm::rotate(glm::radians(angle), glm::vec3(0, 1, 0));
+	glm::mat4 S = glm::scale(scalar);
 
 	return T * R * S;
 }

@@ -23,6 +23,8 @@ protected:
 	virtual QPaintEngine* paintEngine() const { return NULL; } //避免界面闪烁
 	virtual void paintEvent(QPaintEvent* evt);
 	virtual void wheelEvent(QWheelEvent *evt);
+	virtual void mousePressEvent(QMouseEvent *evt);
+	virtual void mouseReleaseEvent(QMouseEvent *evt);
 
 private:
 	Ui::MainWidgetClass ui;
@@ -38,9 +40,14 @@ private:
 
 	void tick();
 
+	QPoint prevMousePos;
+	QPoint curMousePos;
+
 	QTimer drawTimer;//帧刷新计时器
 	QTime *fpsTime;//FPS计时器
 	float deltaTime;//上一帧绘制所需要的之间
+
+	bool isMousePress;
 
 	Scene *scene;
 };

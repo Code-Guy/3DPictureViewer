@@ -4,6 +4,8 @@
 
 using namespace std;
 
+const int MaxSize = 1280;
+
 Texture::Texture(const std::string& fileName, GLuint minFilter, GLuint magFilter)
 {
 	textureObj = 0;
@@ -26,15 +28,23 @@ bool Texture::load(const string& fileName, GLuint minFilter, GLuint magFilter)
 	FREE_IMAGE_FORMAT formato = FreeImage_GetFileType(fileName.c_str(), 0);//Automatocally detects the format(from over 20 formats!)
 	FIBITMAP* imagen = FreeImage_Load(formato, fileName.c_str());
 
-	FIBITMAP* temp = imagen;
-	imagen = FreeImage_ConvertTo32Bits(imagen);
-	FreeImage_Unload(temp);
-
 	int w = FreeImage_GetWidth(imagen);
 	int h = FreeImage_GetHeight(imagen);
 
+	int size = w > h ? w : h;
+	if (size > MaxSize)
+	{
+		w = (float)w * MaxSize / size;
+		h = (float)h * MaxSize / size;
+	}
+
 	this->width = w;
 	this->height = h;
+
+	FIBITMAP* temp = imagen;
+	imagen = FreeImage_Rescale(imagen, w, h, FILTER_BILINEAR);
+	imagen = FreeImage_ConvertTo32Bits(imagen);
+	FreeImage_Unload(temp);
 
 	GLubyte* textura = new GLubyte[4 * w * h];
 	char* pixeles = (char*)FreeImage_GetBits(imagen);

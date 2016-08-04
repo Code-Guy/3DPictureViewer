@@ -12,39 +12,9 @@ Camera::Camera(glm::vec3 pos, glm::vec3 target, glm::vec3 worldUp, float aspectR
 	: pos(pos), view(glm::normalize(target - pos)), worldUp(worldUp), aspectRatio(aspectRatio),
 	fov(fov), nearDist(nearDist), farDist(farDist)
 {
-	yaw = glm::degrees(atanf(view.x / view.z)) + 180;
-	pitch = glm::degrees(acosf(view.y));
-
-	zoomAction.setCurveShape(LinearCurve);
-	zoomAction.setTimeInterval(ZoomTimeInterval);
-
-	updateCameraVectors();
-}
-
-void Camera::logic(float deltaTime)
-{
-	if (zoomAction.isRunning())
-	{
-		zoomAction.logic(deltaTime);
-		pos.z = zoomAction.getValue();
-	}
-
-	Tool::clamp(pos.z, CameraZNear, CameraZFar);
-
-	updateCameraVectors();
-
-	O = glm::ortho(-OrthoSize, OrthoSize, -OrthoSize, OrthoSize, nearDist, farDist);
-	V = glm::lookAt(pos, pos + view, up);
-	P = glm::perspective(fov, aspectRatio, nearDist, farDist);
-
-	VP = P * V;
-}
-
-void Camera::scroll(int numSteps)
-{
-	zoomAction.setBaseValue(pos.z);
-	zoomAction.setIncrementValue(-numSteps * 0.4f);
-	zoomAction.start();
+	getCameraVectors();
+	getMatrixs();
+	getFrustum();
 }
 
 glm::mat4 Camera::getOrthoMatrix()
@@ -67,8 +37,11 @@ glm::mat4 Camera::getViewProjMatrix()
 	return VP;
 }
 
-void Camera::updateCameraVectors()
+void Camera::getCameraVectors()
 {
+	yaw = glm::degrees(atanf(view.x / view.z)) + 180;
+	pitch = glm::degrees(acosf(view.y));
+
 	Tool::clamp(pitch, PitchClampOffset, 180 - PitchClampOffset);
 
 	glm::vec3 rawView;
@@ -80,4 +53,96 @@ void Camera::updateCameraVectors()
 	view = glm::normalize(rawView);
 	right = glm::normalize(glm::cross(view, worldUp));
 	up = glm::normalize(glm::cross(right, view));
+}
+
+void Camera::getMatrixs()
+{
+	O = glm::ortho(-OrthoSize, OrthoSize, -OrthoSize, OrthoSize, nearDist, farDist);
+	V = glm::lookAt(pos, pos + view, up);
+	P = glm::perspective(fov, aspectRatio, nearDist, farDist);
+
+	VP = P * V;
+}
+
+void Camera::getFrustum()
+{
+	float t;
+
+	frustum[0][0] = VP[0][3] + VP[0][0];
+	frustum[0][1] = VP[1][3] + VP[1][0];
+	frustum[0][2] = VP[2][3] + VP[2][0];
+	frustum[0][3] = VP[3][3] + VP[3][0];
+
+	t = sqrt(frustum[0][0] * frustum[0][0] + frustum[0][1] * frustum[0][1] + frustum[0][2] * frustum[0][2]);
+	frustum[0][0] /= t;
+	frustum[0][1] /= t;
+	frustum[0][2] /= t;
+	frustum[0][3] /= t;
+
+	frustum[1][0] = VP[0][3] - VP[0][0];
+	frustum[1][1] = VP[1][3] - VP[1][0];
+	frustum[1][2] = VP[2][3] - VP[2][0];
+	frustum[1][3] = VP[3][3] - VP[3][0];
+
+	t = sqrt(frustum[1][0] * frustum[1][0] + frustum[1][1] * frustum[1][1] + frustum[1][2] * frustum[1][2]);
+	frustum[1][0] /= t;
+	frustum[1][1] /= t;
+	frustum[1][2] /= t;
+	frustum[1][3] /= t;
+
+	frustum[2][0] = VP[0][3] + VP[0][1];
+	frustum[2][1] = VP[1][3] + VP[1][1];
+	frustum[2][2] = VP[2][3] + VP[2][1];
+	frustum[2][3] = VP[3][3] + VP[3][1];
+
+	t = sqrt(frustum[2][0] * frustum[2][0] + frustum[2][1] * frustum[2][1] + frustum[2][2] * frustum[2][2]);
+	frustum[2][0] /= t;
+	frustum[2][1] /= t;
+	frustum[2][2] /= t;
+	frustum[2][3] /= t;
+
+	frustum[3][0] = VP[0][3] - VP[0][1];
+	frustum[3][1] = VP[1][3] - VP[1][1];
+	frustum[3][2] = VP[2][3] - VP[2][1];
+	frustum[3][3] = VP[3][3] - VP[3][1];
+
+	t = sqrt(frustum[3][0] * frustum[3][0] + frustum[3][1] * frustum[3][1] + frustum[3][2] * frustum[3][2]);
+	frustum[3][0] /= t;
+	frustum[3][1] /= t;
+	frustum[3][2] /= t;
+	frustum[3][3] /= t;
+
+	frustum[4][0] = VP[0][3] + VP[0][2];
+	frustum[4][1] = VP[1][3] + VP[1][2];
+	frustum[4][2] = VP[2][3] + VP[2][2];
+	frustum[4][3] = VP[3][3] + VP[3][2];
+
+	t = sqrt(frustum[4][0] * frustum[4][0] + frustum[4][1] * frustum[4][1] + frustum[4][2] * frustum[4][2]);
+	frustum[4][0] /= t;
+	frustum[4][1] /= t;
+	frustum[4][2] /= t;
+	frustum[4][3] /= t;
+
+	frustum[5][0] = VP[0][3] - VP[0][2];
+	frustum[5][1] = VP[1][3] - VP[1][2];
+	frustum[5][2] = VP[2][3] - VP[2][2];
+	frustum[5][3] = VP[3][3] - VP[3][2];
+
+	t = sqrt(frustum[5][0] * frustum[5][0] + frustum[5][1] * frustum[5][1] + frustum[5][2] * frustum[5][2]);
+	frustum[5][0] /= t;
+	frustum[5][1] /= t;
+	frustum[5][2] /= t;
+	frustum[5][3] /= t;
+}
+
+bool Camera::isVertexInFrustum(glm::vec3 v)
+{
+	for (int i = 0; i < 6; i++)
+	{
+		if (frustum[i][0] * v.x + frustum[i][1] * v.y + frustum[i][2] * v.z + frustum[i][3] <= 0)
+		{
+			return false;
+		}
+	}
+	return true;
 }

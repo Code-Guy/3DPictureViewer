@@ -23,9 +23,9 @@ float CalcShadowFactor()
 
     float factor = 0.0;
 
-    for (int y = -2; y <= 2 ; y++) 
+    for (int y = -4; y <= 4; y++) 
     {
-        for (int x = -2; x <= 2 ; x++) 
+        for (int x = -4; x <= 4; x++) 
         {
             vec2 offset = vec2(x * xOffset, y * yOffset);
             vec3 uv = vec3(uvCoord + offset, z);
@@ -33,7 +33,7 @@ float CalcShadowFactor()
         }
     }
 
-    return 0.5 + factor / 50;                                                                   
+    return 0.7 + factor / 270;                                                                   
 }
 
 void main()

@@ -10,7 +10,7 @@ HGLRC _real_glctx;
 
 const int MSAA = 4;
 const int WIDTH = 1280;
-const int HEIGHT = 960;
+const int HEIGHT = 720;
 
 MainWidget::MainWidget(int fps, QWidget *parent)
 	: QWidget(parent)
@@ -31,6 +31,8 @@ MainWidget::MainWidget(int fps, QWidget *parent)
 	fpsTime = new QTime;
 	fpsTime->start();
 
+	isMousePress = false;
+
 	Scene::initSingletons(WIDTH, HEIGHT);
 	scene = new Scene(WIDTH, HEIGHT);
 }
@@ -48,7 +50,14 @@ MainWidget::~MainWidget()
 
 void MainWidget::logic(float deltaTime)
 {
-	scene->logic(deltaTime);
+	int deltaMousePosX = 0;
+	if (isMousePress)
+	{
+		curMousePos = mapFromGlobal(cursor().pos());
+		deltaMousePosX = curMousePos.x() - prevMousePos.x();
+		prevMousePos = mapFromGlobal(cursor().pos());
+	}
+	scene->logic(deltaTime, deltaMousePosX);
 }
 
 void MainWidget::render()
@@ -72,7 +81,18 @@ void MainWidget::paintEvent(QPaintEvent* evt)
 void MainWidget::wheelEvent(QWheelEvent *evt)
 {
 	int numSteps = evt->delta() / 120;//滚动的步数
-	Scene::getCamera()->scroll(numSteps);
+}
+
+void MainWidget::mousePressEvent(QMouseEvent *evt)
+{
+	isMousePress = true;
+	prevMousePos = evt->pos();
+	curMousePos = evt->pos();
+}
+
+void MainWidget::mouseReleaseEvent(QMouseEvent *evt)
+{
+	isMousePress = false;
 }
 
 void MainWidget::initWidgetProp()//初始化widget的一些属性
@@ -140,8 +160,8 @@ void MainWidget::initGLStates()//初始化opengl参数
 {
 	glClearColor(0, 1, 0, 1);
 
-	glFrontFace(GL_CCW);
-	glEnable(GL_CULL_FACE);
+	//glFrontFace(GL_CCW);
+	//glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 }
 

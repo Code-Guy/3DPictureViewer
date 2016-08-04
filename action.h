@@ -24,6 +24,7 @@ public:
 	void setCurveShape(CurveShape curveShape);
 
 	float getValue();
+	float getDeltaValue();
 
 	bool isRunning();
 
@@ -33,6 +34,7 @@ private:
 	float timeInterval;
 
 	float t;
+	float deltaVal;
 	float val;
 	CurveShape curveShape;
 

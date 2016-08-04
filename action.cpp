@@ -23,6 +23,7 @@ void Action::logic(float deltaTime)
 		}
 		else
 		{
+			float lastVal = val;
 			switch (curveShape)
 			{
 			case LinearCurve:
@@ -40,6 +41,7 @@ void Action::logic(float deltaTime)
 			default:
 				break;
 			}
+			deltaVal = val - lastVal;
 		}
 	}
 }
@@ -78,6 +80,11 @@ void Action::setCurveShape(CurveShape curveShape)
 float Action::getValue()
 {
 	return val;
+}
+
+float Action::getDeltaValue()
+{
+	return deltaVal;
 }
 
 bool Action::isRunning()
