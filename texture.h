@@ -20,6 +20,9 @@ public:
 	int getWidth();
 	int getHeight();
 
+	int getRealWidth();
+	int getRealHeight();
+
 	unsigned char *getBits();
 	void setBits(unsigned char *bits, int w, int h);
 
@@ -34,6 +37,9 @@ private:
 
 	int width;
 	int height;
+
+	int realWidth;
+	int realHeight;
 };
 
 #endif //_TEXTURE_H

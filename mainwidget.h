@@ -4,6 +4,7 @@
 #include <QtWidgets/QWidget>
 #include <QTime>
 #include <QTimer>
+#include <QLabel>
 #include "ui_mainwidget.h"
 
 #include "scene.h"
@@ -25,6 +26,13 @@ protected:
 	virtual void wheelEvent(QWheelEvent *evt);
 	virtual void mousePressEvent(QMouseEvent *evt);
 	virtual void mouseReleaseEvent(QMouseEvent *evt);
+	virtual void closeEvent(QCloseEvent *evt);
+	virtual void changeEvent(QEvent *evt);
+
+private slots:
+	void setFileName(QString fileName);
+	void setResolution(int width, int height);
+	void setAlpha(float alpha);
 
 private:
 	Ui::MainWidgetClass ui;
@@ -34,6 +42,9 @@ private:
 	bool initMultiSample();//设置MultiSample
 	void initGlew();//初始化Glew
 	void initGLStates();//初始化opengl参数
+	void initLabels();//初始化label
+
+	void renderLabels();
 
 	bool setMultisample(HWND hWnd, int sampleNum, int &pixelFormat);
 	bool wglIsExtensionSupported(const char *extension);
@@ -50,6 +61,9 @@ private:
 	bool isMousePress;
 
 	Scene *scene;
+
+	QLabel *fileNameLabel;
+	QLabel *resolutionLabel;
 };
 
 #endif // MAINWIDGET_H

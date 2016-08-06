@@ -1,5 +1,6 @@
 #include "picture.h"
 #include "scene.h"
+#include <QDebug>
 
 float Picture::radius;
 
@@ -8,6 +9,7 @@ const float ShadowMapDepthOffset = -0.01f;
 Picture::Picture(std::string fileName)
 {
 	texture = new Texture(fileName);
+	this->fileName = QString::fromLocal8Bit(getFileName(fileName).c_str());
 
 	position = glm::vec3();
 	angle = 0;
@@ -102,6 +104,21 @@ int Picture::getHeight()
 	return texture->getHeight();
 }
 
+int Picture::getRealWidth()
+{
+	return texture->getRealWidth();
+}
+
+int Picture::getRealHeight()
+{
+	return texture->getRealHeight();
+}
+
+QString Picture::getFileName()
+{
+	return fileName;
+}
+
 unsigned char *Picture::getBits()
 {
 	return texture->getBits();
@@ -184,4 +201,10 @@ glm::mat4 Picture::getModelMatrix()
 	glm::mat4 S = glm::scale(scalar);
 
 	return T * R * S;
+}
+
+std::string Picture::getFileName(std::string filePath)
+{
+	int pos = filePath.find_last_of('/');
+	return std::string(filePath.substr(pos + 1));
 }

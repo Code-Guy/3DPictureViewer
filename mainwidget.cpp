@@ -11,6 +11,8 @@ HGLRC _real_glctx;
 const int MSAA = 4;
 const int WIDTH = 1280;
 const int HEIGHT = 720;
+const QColor FileNameColor(59, 59, 59, 255);
+const QColor ResolutionColor(112, 112, 112, 255);
 
 MainWidget::MainWidget(int fps, QWidget *parent)
 	: QWidget(parent)
@@ -22,6 +24,7 @@ MainWidget::MainWidget(int fps, QWidget *parent)
 	initMultiSample();
 	initGlew();
 	initGLStates();
+	initLabels();
 
 	//设置绘制计时器
 	connect(&drawTimer, SIGNAL(timeout()), this, SLOT(update()));
@@ -35,6 +38,10 @@ MainWidget::MainWidget(int fps, QWidget *parent)
 
 	Scene::initSingletons(WIDTH, HEIGHT);
 	scene = new Scene(WIDTH, HEIGHT);
+
+	connect(scene, SIGNAL(setFileName(QString)), this, SLOT(setFileName(QString)));
+	connect(scene, SIGNAL(setResolution(int, int)), this, SLOT(setResolution(int, int)));
+	connect(scene, SIGNAL(setAlpha(float)), this, SLOT(setAlpha(float)));
 }
 
 MainWidget::~MainWidget()
@@ -43,6 +50,8 @@ MainWidget::~MainWidget()
 
 	delete fpsTime;
 	delete scene;
+	delete fileNameLabel;
+	delete resolutionLabel;
 
 	wglDeleteContext(_dummy_glctx);
 	wglDeleteContext(_real_glctx);
@@ -71,11 +80,18 @@ void MainWidget::paintEvent(QPaintEvent* evt)
 
 	logic(deltaTime);
 	render();
+	renderLabels();
 
 	HWND hwnd = (HWND)winId();
 	HDC hdc = GetDC(hwnd);
 	SwapBuffers(hdc);
 	ReleaseDC(hwnd, hdc);
+}
+
+void MainWidget::renderLabels()
+{
+	fileNameLabel->move(pos() + QPoint((width() - fileNameLabel->width()) / 2, 40));
+	resolutionLabel->move(pos() + QPoint((width() - resolutionLabel->width()) / 2, 70));
 }
 
 void MainWidget::wheelEvent(QWheelEvent *evt)
@@ -96,13 +112,56 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *evt)
 	scene->addAction();
 }
 
+void MainWidget::closeEvent(QCloseEvent *evt)
+{
+	fileNameLabel->close();
+	resolutionLabel->close();
+}
+
+void MainWidget::changeEvent(QEvent *evt)
+{
+	if (evt->type() == QEvent::WindowStateChange && windowState() & Qt::WindowMinimized)
+	{
+		fileNameLabel->showMinimized();
+		resolutionLabel->showMinimized();
+	}
+	else if (evt->type() == QEvent::ActivationChange & isActiveWindow())
+	{
+		fileNameLabel->showNormal();
+		resolutionLabel->showNormal();
+	}
+}
+
+void MainWidget::setFileName(QString fileName)
+{
+	fileNameLabel->setText(QString::fromLocal8Bit("文件名：") + fileName);
+	fileNameLabel->adjustSize();
+}
+
+void MainWidget::setResolution(int width, int height)
+{
+	resolutionLabel->setText(QString::fromLocal8Bit("分辨率：%1, %2").arg(width).arg(height));
+	resolutionLabel->adjustSize();
+}
+
+void MainWidget::setAlpha(float alpha)
+{
+	QPalette p1;
+	p1.setColor(QPalette::WindowText, QColor(FileNameColor.red(), FileNameColor.green(), FileNameColor.blue(), alpha * 255));
+	fileNameLabel->setPalette(p1);
+
+	QPalette p2;
+	p2.setColor(QPalette::WindowText, QColor(ResolutionColor.red(), ResolutionColor.green(), ResolutionColor.blue(), alpha * 255));
+	resolutionLabel->setPalette(p2);
+}
+
 void MainWidget::initWidgetProp()//初始化widget的一些属性
 {
 	setWindowOpacity(1);
 	setWindowTitle(tr("3D Picture Viewer"));
+
 	setAttribute(Qt::WA_OpaquePaintEvent);
 	setAttribute(Qt::WA_PaintOnScreen);
-	setAttribute(Qt::WA_InputMethodEnabled);
 
 	setFixedSize(WIDTH, HEIGHT);
 }
@@ -165,6 +224,31 @@ void MainWidget::initGLStates()//初始化opengl参数
 	//glFrontFace(GL_CCW);
 	//glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
+}
+
+void MainWidget::initLabels()
+{
+	fileNameLabel = new QLabel;
+	fileNameLabel->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
+	fileNameLabel->setAttribute(Qt::WA_TranslucentBackground);
+	fileNameLabel->setText("temp");
+	fileNameLabel->setFont(QFont("Microsoft YaHei", 18));
+	QPalette p1;
+	p1.setColor(QPalette::WindowText, FileNameColor);
+	fileNameLabel->setPalette(p1);
+	fileNameLabel->adjustSize();
+	fileNameLabel->show();
+
+	resolutionLabel = new QLabel;
+	resolutionLabel->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
+	resolutionLabel->setAttribute(Qt::WA_TranslucentBackground);
+	resolutionLabel->setText("temp");
+	resolutionLabel->setFont(QFont("Microsoft YaHei", 14));
+	QPalette p2;
+	p2.setColor(QPalette::WindowText, ResolutionColor);
+	resolutionLabel->setPalette(p2);
+	resolutionLabel->adjustSize();
+	resolutionLabel->show();
 }
 
 bool MainWidget::initMultiSample()//设置MultiSample

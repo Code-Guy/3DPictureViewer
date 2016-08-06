@@ -45,6 +45,9 @@ Scene::Scene(int width, int height)
 	{
 		printf("initialize shadow map fbo failed!\n");
 	}
+
+	prevCenterPictureIndex = -1;
+	curCenterPictureIndex = -1;
 }
 
 Scene::~Scene()
@@ -63,14 +66,14 @@ Scene::~Scene()
 void Scene::logic(float deltaTime, int deltaMousePosX)
 {
 	float deltaAngle = 0;
-	if (deltaMousePosX != 0)
+	if (deltaMousePosX != 0)//如果拖动鼠标，旋转图片
 	{
 		lastDeltaMousePosX = deltaMousePosX;
 		actions.clear();
 
 		deltaAngle = -deltaMousePosX * MouseMoveSensitiy;
 	}
-	else if (!actions.empty())
+	else if (!actions.empty())//执行动作队列
 	{
 		Action &action = actions.front();
 		if (!action.isRunning())
@@ -94,6 +97,7 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 		}
 	}
 
+	//计算各种特殊角度
 	float upBoundAngle = spanAngle * (pictures.size() / 2);
 	float backAngle = spanAngle * pictures.size();
 	float invisibleAngle = MaxVisiblePictureNum / 2 * spanAngle;
@@ -103,6 +107,7 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 	for (auto picture : pictures)
 	{
 		picture->addAngle(deltaAngle);
+		//循环显示
 		if (picture->getAngle() > upBoundAngle)
 		{
 			picture->addAngle(-backAngle);
@@ -111,7 +116,7 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 		{
 			picture->addAngle(backAngle);
 		}
-
+		//不显示摄像机不在视野内的图片
 		if (abs(picture->getAngle()) < invisibleAngle)
 		{
 			picture->setVisible(true);
@@ -120,19 +125,31 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 		if (abs(picture->getAngle()) < abs(centerPictureAngle))
 		{
 			centerPictureAngle = picture->getAngle();
-			centerPictureIndex = index;
+			curCenterPictureIndex = index;
 		}
 		index++;
 	}
 
+	Picture *centerPicture = pictures[curCenterPictureIndex];
+	//如果中心图片发生变动
+	if (curCenterPictureIndex != prevCenterPictureIndex)
+	{
+		bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
+		emit setFileName(centerPicture->getFileName());
+		emit setResolution(centerPicture->getRealWidth(), centerPicture->getRealHeight());
+
+		prevCenterPictureIndex = curCenterPictureIndex;
+	}
+	//各种渐变效果
 	if (!Tool::isFloatEqual(centerPictureAngle, 0) && abs(centerPictureAngle) < ScaleAngle)
 	{
 		float size = (1 - CenterScale) / ScaleAngle * abs(centerPictureAngle) + CenterScale;
-		Picture *centerPicture = pictures[centerPictureIndex];
+		float imageAlpha = -CenterAlpha * abs(centerPictureAngle) / ScaleAngle + CenterAlpha;
+		float textAlpha = -abs(centerPictureAngle) / ScaleAngle + 1;
+
 		centerPicture->setSize(size);
-		float alpha = -CenterAlpha * abs(centerPictureAngle) / ScaleAngle + CenterAlpha;
-		bgPicture->setAlpha(alpha);
-		bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
+		bgPicture->setAlpha(imageAlpha);
+		emit setAlpha(textAlpha);
 	}
 }
 
@@ -231,7 +248,6 @@ void Scene::genPictures()
 
 	Picture *centerPicture = pictures[n / 2];
 	centerPicture->setSize(CenterScale);
-	bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
 	bgPicture->setBlur(true);
 	bgPicture->setAlpha(CenterAlpha);
 }

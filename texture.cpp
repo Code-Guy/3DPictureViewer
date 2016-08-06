@@ -39,6 +39,9 @@ bool Texture::load(const string& fileName, GLuint minFilter, GLuint magFilter)
 	int w = image.width();
 	int h = image.height();
 
+	realWidth = w;
+	realHeight = h;
+
 	int size = w > h ? w : h;
 	if (size > MaxSize)
 	{
@@ -46,8 +49,8 @@ bool Texture::load(const string& fileName, GLuint minFilter, GLuint magFilter)
 		h = (float)h * MaxSize / size;
 	}
 
-	this->width = w;
-	this->height = h;
+	width = w;
+	height = h;
 
 	image = image.scaled(w, h);
 
@@ -101,6 +104,16 @@ int Texture::getWidth()
 int Texture::getHeight()
 {
 	return height;
+}
+
+int Texture::getRealWidth()
+{
+	return realWidth;
+}
+
+int Texture::getRealHeight()
+{
+	return realHeight;
 }
 
 unsigned char *Texture::getBits()

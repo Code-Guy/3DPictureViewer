@@ -11,9 +11,11 @@
 
 #include <vector>
 #include <deque>
+#include <QObject>
 
-class Scene
+class Scene : public QObject
 {
+	Q_OBJECT
 public:
 	Scene(int width, int height);
 	~Scene();
@@ -28,6 +30,11 @@ public:
 
 	static Camera *getCamera();
 	static PointLight *getLight();
+
+signals:
+	void setFileName(QString fileName);
+	void setResolution(int width, int height);
+	void setAlpha(float alpha);
 
 private:
 	Picture *bgPicture;
@@ -45,7 +52,8 @@ private:
 
 	float lastDeltaMousePosX;
 
-	int centerPictureIndex;
+	int prevCenterPictureIndex;
+	int curCenterPictureIndex;
 	float centerPictureAngle;
 
 	std::deque<Action> actions;

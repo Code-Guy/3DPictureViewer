@@ -20,19 +20,22 @@ public:
 	Picture(std::string fileName);
 	~Picture();
 
-	void setPosition(glm::vec3 position);
-	void setSize(float size);
-
-	float getAngle();
-	int getWidth();
-	int getHeight();
-	unsigned char *getBits();
-	void setBits(unsigned char *bits, int w, int h);
-
-	void addAngle(float angle);
-
 	void renderPass(PictureShader *pictureShader);
 	void shadowMapPass(ShadowMapShader *shadowMapShader);
+
+	void setPosition(glm::vec3 position);
+	void setSize(float size);
+	void setBits(unsigned char *bits, int w, int h);
+
+	float getAngle();
+	void addAngle(float angle);
+
+	int getWidth();
+	int getHeight();
+	int getRealWidth();
+	int getRealHeight();
+	QString getFileName();
+	unsigned char *getBits();
 
 	void setVisible(bool isVisible);
 	void setBlur(bool isBlur);
@@ -42,6 +45,7 @@ public:
 
 private:
 	Texture *texture;
+	QString fileName;
 
 	GLuint vao;
 	GLuint buffers[3];
@@ -61,6 +65,7 @@ private:
 	static float radius;
 
 	glm::mat4 getModelMatrix();
+	std::string getFileName(std::string filePath);
 };
 
 #endif //_PICTURE_H
