@@ -7,7 +7,8 @@ out vec4 FragColor;
 
 uniform sampler2D TextureMap;
 uniform sampler2DShadow ShadowMap;
-uniform bool IsBlur = false;
+uniform bool IsBlur;
+uniform float Alpha;
 
 float normpdf(float x, float sigma)
 {
@@ -46,7 +47,7 @@ void GaussianBlur()
 	}
 
 	FragColor = vec4(final_colour/(Z*Z), texture(TextureMap, FragTexCoord).a);
-	FragColor.rgb = FragColor.rgb * 0.4f + vec3(1, 1, 1) * 0.6f;
+	FragColor.rgb = FragColor.rgb * Alpha + vec3(1, 1, 1) * (1 - Alpha);
 }
 
 float CalcShadowFactor()                                                  
@@ -64,9 +65,9 @@ float CalcShadowFactor()
 
     float factor = 0.0;
 
-    for (int y = -4; y <= 4; y++) 
+    for (int y = -3; y <= 3; y++) 
     {
-        for (int x = -4; x <= 4; x++) 
+        for (int x = -3; x <= 3; x++) 
         {
             vec2 offset = vec2(x * xOffset, y * yOffset);
             vec3 uv = vec3(uvCoord + offset, z);
@@ -74,7 +75,7 @@ float CalcShadowFactor()
         }
     }
 
-    return 0.7 + factor / 270;                                                                   
+    return 0.7 + factor / 163;                                                                   
 }
 
 void main()

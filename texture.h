@@ -25,6 +25,8 @@ public:
 
 private:
 	bool valid;
+	bool compress;
+
 	GLuint textureObj;
 
 	unsigned char *srcBits;

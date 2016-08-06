@@ -19,7 +19,7 @@ const float BounceTimeInterval = 0.8f;
 const int MaxVisiblePictureNum = 6;
 const float ScaleAngle = 10.0f;
 const float CenterScale = 1.8f;
-const float CenterAlpha = 0.3f;
+const float CenterAlpha = 0.4f;
 
 Scene::Scene(int width, int height)
 {
@@ -131,6 +131,7 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 		Picture *centerPicture = pictures[centerPictureIndex];
 		centerPicture->setSize(size);
 		float alpha = -CenterAlpha * abs(centerPictureAngle) / ScaleAngle + CenterAlpha;
+		bgPicture->setAlpha(alpha);
 		bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
 	}
 }
@@ -207,7 +208,7 @@ void Scene::genPictures()
 	bgPicture->setPosition(glm::vec3(0, 0, -1.0f));
 	bgPicture->setSize(6);
 	bgPicture->setVisible(true);
-
+	
 	vector<string> picturePaths;
 	Tool::traverseFilesInDirectory("Resources/pictures", picturePaths, true);
 	//Tool::traverseFilesInDirectory("E:/Privacy/Í¼Æ¬/»ùÓÑÎ÷ºþÓÎ", picturePaths, true);
@@ -232,4 +233,5 @@ void Scene::genPictures()
 	centerPicture->setSize(CenterScale);
 	bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
 	bgPicture->setBlur(true);
+	bgPicture->setAlpha(CenterAlpha);
 }

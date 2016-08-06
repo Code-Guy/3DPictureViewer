@@ -1,11 +1,10 @@
 #include "texture.h"
-#include <FreeImage/FreeImage.h>
 #include <iostream>
 #include <tool.h>
 
 using namespace std;
 
-const int MaxSize = 800;
+const int MaxSize = 1024;
 const int GaussianBlurRadius = 5;
 
 Texture::Texture(const std::string& fileName, GLuint minFilter, GLuint magFilter)
@@ -35,12 +34,10 @@ Texture::~Texture()
 
 bool Texture::load(const string& fileName, GLuint minFilter, GLuint magFilter)
 {
+	QImage image(QString::fromLocal8Bit(fileName.c_str()));;
 
-	FREE_IMAGE_FORMAT formato = FreeImage_GetFileType(fileName.c_str(), 0);//Automatocally detects the format(from over 20 formats!)
-	FIBITMAP* imagen = FreeImage_Load(formato, fileName.c_str());
-
-	int w = FreeImage_GetWidth(imagen);
-	int h = FreeImage_GetHeight(imagen);
+	int w = image.width();
+	int h = image.height();
 
 	int size = w > h ? w : h;
 	if (size > MaxSize)
@@ -52,27 +49,26 @@ bool Texture::load(const string& fileName, GLuint minFilter, GLuint magFilter)
 	this->width = w;
 	this->height = h;
 
-	FIBITMAP* temp = imagen;
-	imagen = FreeImage_Rescale(imagen, w, h, FILTER_BILINEAR);
-	imagen = FreeImage_ConvertTo32Bits(imagen);
-	FreeImage_Unload(temp);
+	image = image.scaled(w, h);
 
-	srcBits = new unsigned char[4 * w * h];
-	char* pixeles = (char*)FreeImage_GetBits(imagen);
-	//FreeImage loads in BGR format, so you need to swap some bytes(Or use GL_BGR).
-
-	for (int j = 0; j < w*h; j++)
+	srcBits = new unsigned char[w * h * 4];
+	for (int i = 0; i < h; i++)
 	{
-		srcBits[j * 4 + 0] = pixeles[j * 4 + 2];
-		srcBits[j * 4 + 1] = pixeles[j * 4 + 1];
-		srcBits[j * 4 + 2] = pixeles[j * 4 + 0];
-		srcBits[j * 4 + 3] = pixeles[j * 4 + 3];
+		QRgb *rowData = (QRgb *)image.scanLine(i);
+		for (int j = 0; j < w; j++)
+		{
+			QRgb pixelData = rowData[j];
+			srcBits[((h - i - 1) * w + j) * 4] = qRed(pixelData);
+			srcBits[((h - i - 1) * w + j) * 4 + 1] = qGreen(pixelData);
+			srcBits[((h - i - 1) * w + j) * 4 + 2] = qBlue(pixelData);
+			srcBits[((h - i - 1) * w + j) * 4 + 3] = qAlpha(pixelData);
+		}
 	}
-
+	
 	//Now generate the OpenGL texture object 
 	glGenTextures(1, &textureObj);
 	glBindTexture(GL_TEXTURE_2D, textureObj);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)srcBits);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, srcBits);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
 

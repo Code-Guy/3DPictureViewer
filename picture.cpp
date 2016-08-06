@@ -137,6 +137,7 @@ void Picture::renderPass(PictureShader *pictureShader)
 		pictureShader->setMVP(VP * M);
 		pictureShader->setLightMVP(LightVP * M);
 		pictureShader->setBlur(isBlur);
+		pictureShader->setAlpha(alpha);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -169,6 +170,11 @@ void Picture::setVisible(bool isVisible)
 void Picture::setBlur(bool isBlur)
 {
 	this->isBlur = isBlur;
+}
+
+void Picture::setAlpha(float alpha)
+{
+	this->alpha = alpha;
 }
 
 glm::mat4 Picture::getModelMatrix()

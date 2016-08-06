@@ -57,6 +57,12 @@ bool PictureShader::init()
 		return false;
 	}
 
+	AlphaLocation = getUniformLocation("Alpha");
+	if (AlphaLocation == INVALID_UNIFORM_LOCATION)
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -83,4 +89,9 @@ void PictureShader::setShadowMap(unsigned int ShadowMap)
 void PictureShader::setBlur(bool flag)
 {
 	glUniform1i(IsBlurLocation, flag);
+}
+
+void PictureShader::setAlpha(float alpha)
+{
+	glUniform1f(AlphaLocation, alpha);
 }

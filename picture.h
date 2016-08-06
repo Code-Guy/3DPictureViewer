@@ -36,6 +36,7 @@ public:
 
 	void setVisible(bool isVisible);
 	void setBlur(bool isBlur);
+	void setAlpha(float alpha);
 
 	static void setRadius(float radius);
 
@@ -55,6 +56,7 @@ private:
 
 	bool isVisible;
 	bool isBlur;
+	float alpha;
 
 	static float radius;
 
