@@ -18,9 +18,6 @@ Picture::Picture(std::string fileName)
 
 	setSize(1.0f);
 
-	glGenVertexArrays(1, &vao);
-	glGenBuffers(3, buffers);
-
 	pos[0] = glm::vec3(1.0f, 1.0f, 0.0f);
 	pos[1] = glm::vec3(-1.0f, 1.0f, 0.0f);
 	pos[2] = glm::vec3(-1.0f, -1.0f, 0.0f);
@@ -38,22 +35,7 @@ Picture::Picture(std::string fileName)
 	indices[4] = 3;
 	indices[5] = 0;
 
-	glBindVertexArray(vao);
-
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[POS_VB]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(POS_LOCATION);
-	glVertexAttribPointer(POS_LOCATION, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[TEXCOORD_VB]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(texCoord), texCoord, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(TEXCOORD_LOCATION);
-	glVertexAttribPointer(TEXCOORD_LOCATION, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[INDEX_VB]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	glBindVertexArray(0);
+	memset(buffers, 0, sizeof(GLuint)* 3);
 }
 
 Picture::~Picture()
@@ -92,6 +74,11 @@ void Picture::setSize(float size)
 float Picture::getAngle()
 {
 	return angle;
+}
+
+void Picture::setAngle(float angle)
+{
+	this->angle = angle;
 }
 
 int Picture::getWidth()
@@ -192,6 +179,34 @@ void Picture::setBlur(bool isBlur)
 void Picture::setAlpha(float alpha)
 {
 	this->alpha = alpha;
+}
+
+bool Picture::glStuff()
+{
+	if (buffers[0] == 0)
+	{
+		glGenVertexArrays(1, &vao);
+		glGenBuffers(3, buffers);
+
+		glBindVertexArray(vao);
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[POS_VB]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(pos), pos, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(POS_LOCATION);
+		glVertexAttribPointer(POS_LOCATION, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[TEXCOORD_VB]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(texCoord), texCoord, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(TEXCOORD_LOCATION);
+		glVertexAttribPointer(TEXCOORD_LOCATION, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[INDEX_VB]);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+		glBindVertexArray(0);
+	}
+
+	return texture->attach();
 }
 
 glm::mat4 Picture::getModelMatrix()

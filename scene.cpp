@@ -3,6 +3,8 @@
 #include "tool.h"
 
 #include <algorithm>
+#include <thread>
+#include <mutex>
 
 Camera *Scene::camera = NULL;
 PointLight *Scene::light = NULL;
@@ -11,20 +13,19 @@ using namespace std;
 
 const int ShadowMapSize = 2048;
 const float SpanDistance = 3.5f;
-const float MouseMoveSensitiy = 0.02f;
-const float MouseEaseOutBound = 5.0f;
-const float MouseEaseOutSensitiy = 0.5f;
-const float MouseEaseOutSpeed = 100.0f;
+const float MouseMoveSensitiy = 0.5f;
+const float MouseEaseOutSensitiy = 3.0f;
+const float MouseEaseOutDump = 0.01f;
 const float BounceTimeInterval = 0.8f;
 const int MaxVisiblePictureNum = 6;
-const float ScaleAngle = 10.0f;
 const float CenterScale = 1.8f;
 const float CenterAlpha = 0.4f;
+const float ArrangePicturesInterval = 0.5f;
+
+std::mutex mu;
 
 Scene::Scene(int width, int height)
 {
-	genPictures();
-
 	pictureShader = new PictureShader;
 	if (!pictureShader->init())
 	{
@@ -48,6 +49,13 @@ Scene::Scene(int width, int height)
 
 	prevCenterPictureIndex = -1;
 	curCenterPictureIndex = -1;
+	loadFinish = false;
+	arrangeFinish = false;
+
+	loadBgPicture();
+
+	std::thread t([this] { loadPictures(); });
+	t.detach();
 }
 
 Scene::~Scene()
@@ -65,91 +73,122 @@ Scene::~Scene()
 
 void Scene::logic(float deltaTime, int deltaMousePosX)
 {
-	float deltaAngle = 0;
-	if (deltaMousePosX != 0)//如果拖动鼠标，旋转图片
+	static float arrangePicturesTimer = 0;
+	if (!arrangeFinish)
 	{
-		lastDeltaMousePosX = deltaMousePosX;
-		actions.clear();
-
-		deltaAngle = -deltaMousePosX * MouseMoveSensitiy;
-	}
-	else if (!actions.empty())//执行动作队列
-	{
-		Action &action = actions.front();
-		if (!action.isRunning())
+		arrangePicturesTimer += deltaTime;
+		if (arrangePicturesTimer >= ArrangePicturesInterval)
 		{
-			if (action.getCurveShape() == EaseOutCurve)
+			arrangePictures();
+			arrangePicturesTimer = 0;
+		}
+	}
+
+	int n = pictures.size();
+	if (n > 1)
+	{
+		float deltaAngle = 0;
+		if (deltaMousePosX != 0)//如果拖动鼠标，旋转图片
+		{
+			lastDeltaMousePosX = deltaMousePosX;
+			actions.clear();
+
+			deltaAngle = -(float)deltaMousePosX / n * MouseMoveSensitiy;
+		}
+		else if (!actions.empty())//执行动作队列
+		{
+			Action &action = actions.front();
+			if (!action.isRunning())
 			{
-				Action bounceAction;
-				bounceAction.setBaseValue(0);
-				bounceAction.setIncrementValue(-centerPictureAngle);
-				bounceAction.setTimeInterval(BounceTimeInterval);
-				bounceAction.setCurveShape(BounceCurve);
-				bounceAction.start();
-				actions.push_back(bounceAction);
+				if (action.getCurveShape() == EaseOutCurve)
+				{
+					Action bounceAction;
+					bounceAction.setBaseValue(0);
+					bounceAction.setIncrementValue(-centerPictureAngle);
+					bounceAction.setTimeInterval(BounceTimeInterval);
+					bounceAction.setCurveShape(BounceCurve);
+					bounceAction.start();
+					actions.push_back(bounceAction);
+				}
+				actions.pop_front();
 			}
-			actions.pop_front();
+			else
+			{
+				action.logic(deltaTime);
+				deltaAngle = action.getDeltaValue();
+			}
 		}
-		else
+
+		//计算各种特殊角度
+		float upBoundAngle = spanAngle * (n / 2);
+		float backAngle = spanAngle * n;
+		float invisibleAngle = MaxVisiblePictureNum / 2 * spanAngle;
+
+		centerPictureAngle = MAX_NUM;
+		int index = 0;
+		for (auto picture : pictures)
 		{
-			action.logic(deltaTime);
-			deltaAngle = action.getDeltaValue();
+			picture->addAngle(deltaAngle);
+			//循环显示
+			if (picture->getAngle() > upBoundAngle)
+			{
+				picture->addAngle(-backAngle);
+			}
+			else if (picture->getAngle() < -(backAngle - upBoundAngle))
+			{
+				picture->addAngle(backAngle);
+			}
+			//不显示摄像机不在视野内的图片
+			if (abs(picture->getAngle()) < invisibleAngle)
+			{
+				picture->setVisible(true);
+			}
+
+			if (abs(picture->getAngle()) < abs(centerPictureAngle))
+			{
+				centerPictureAngle = picture->getAngle();
+				curCenterPictureIndex = index;
+			}
+			index++;
 		}
-	}
-
-	//计算各种特殊角度
-	float upBoundAngle = spanAngle * (pictures.size() / 2);
-	float backAngle = spanAngle * pictures.size();
-	float invisibleAngle = MaxVisiblePictureNum / 2 * spanAngle;
-
-	centerPictureAngle = MAX_NUM;
-	int index = 0;
-	for (auto picture : pictures)
-	{
-		picture->addAngle(deltaAngle);
-		//循环显示
-		if (picture->getAngle() > upBoundAngle)
+		Picture *centerPicture = pictures[curCenterPictureIndex];
+		//如果中心图片发生变动
+		if (curCenterPictureIndex != prevCenterPictureIndex)
 		{
-			picture->addAngle(-backAngle);
+			bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
+			emit setFileName(centerPicture->getFileName());
+			emit setResolution(centerPicture->getRealWidth(), centerPicture->getRealHeight());
+
+			prevCenterPictureIndex = curCenterPictureIndex;
 		}
-		else if (picture->getAngle() < -(backAngle - upBoundAngle))
+
+		//各种渐变效果
+		if (!Tool::isFloatEqual(centerPictureAngle, 0) && abs(centerPictureAngle) < spanAngle / 2)
 		{
-			picture->addAngle(backAngle);
+			float imageAlpha = -2.0f * CenterAlpha * abs(centerPictureAngle) / spanAngle + CenterAlpha;
+			float textAlpha = -2.0f * abs(centerPictureAngle) / spanAngle + 1;
+
+			bgPicture->setAlpha(imageAlpha);
+			emit setAlpha(textAlpha);
 		}
-		//不显示摄像机不在视野内的图片
-		if (abs(picture->getAngle()) < invisibleAngle)
+
+		for (auto picture : pictures)
 		{
-			picture->setVisible(true);
+			float curPictureAngle = picture->getAngle();
+			if (Tool::isFloatEqual(curPictureAngle, 0))
+			{
+				picture->setSize(CenterScale);
+			}
+			else if (abs(curPictureAngle) < spanAngle / 2)
+			{
+				float size = 2.0f * (1 - CenterScale) / spanAngle * abs(curPictureAngle) + CenterScale;
+				centerPicture->setSize(size);
+			}
+			else
+			{
+				picture->setSize(1.0f);
+			}
 		}
-
-		if (abs(picture->getAngle()) < abs(centerPictureAngle))
-		{
-			centerPictureAngle = picture->getAngle();
-			curCenterPictureIndex = index;
-		}
-		index++;
-	}
-
-	Picture *centerPicture = pictures[curCenterPictureIndex];
-	//如果中心图片发生变动
-	if (curCenterPictureIndex != prevCenterPictureIndex)
-	{
-		bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
-		emit setFileName(centerPicture->getFileName());
-		emit setResolution(centerPicture->getRealWidth(), centerPicture->getRealHeight());
-
-		prevCenterPictureIndex = curCenterPictureIndex;
-	}
-	//各种渐变效果
-	if (!Tool::isFloatEqual(centerPictureAngle, 0) && abs(centerPictureAngle) < ScaleAngle)
-	{
-		float size = (1 - CenterScale) / ScaleAngle * abs(centerPictureAngle) + CenterScale;
-		float imageAlpha = -CenterAlpha * abs(centerPictureAngle) / ScaleAngle + CenterAlpha;
-		float textAlpha = -abs(centerPictureAngle) / ScaleAngle + 1;
-
-		centerPicture->setSize(size);
-		bgPicture->setAlpha(imageAlpha);
-		emit setAlpha(textAlpha);
 	}
 }
 
@@ -183,9 +222,10 @@ void Scene::addAction()
 	{
 		Action action;
 		action.setBaseValue(0);
-		float mouseEaseOutAngle = lastDeltaMousePosX * MouseEaseOutSensitiy;
-		action.setIncrementValue(-mouseEaseOutAngle);
-		action.setTimeInterval(abs(mouseEaseOutAngle / MouseEaseOutSpeed));
+		float easeOutLen = lastDeltaMousePosX / pictures.size() * MouseEaseOutSensitiy;
+
+		action.setIncrementValue(-easeOutLen);
+		action.setTimeInterval(sqrt(abs(easeOutLen) * MouseEaseOutDump));
 		action.setCurveShape(EaseOutCurve);
 		action.start();
 		actions.push_back(action);
@@ -219,35 +259,64 @@ PointLight *Scene::getLight()
 	return light;
 }
 
-void Scene::genPictures()
+void Scene::arrangePictures()
+{
+	pictures.clear();
+	mu.lock();
+	int n = subthreadPictures.size();
+
+	if (n != 0)
+	{
+		spanAngle = n <= 24 ? 15.0f : 360.0f / n;
+		radius = 0.5f * SpanDistance / sin(glm::radians(spanAngle / 2));
+
+		Picture::setRadius(radius);
+
+		for (int i = 0; i < n; i++)
+		{
+			subthreadPictures[i]->glStuff();
+			subthreadPictures[i]->setAngle(spanAngle * (i - n / 2));
+			pictures.push_back(subthreadPictures[i]);
+		}
+	}
+	mu.unlock();
+
+	arrangeFinish = loadFinish;
+}
+
+void Scene::loadBgPicture()
 {
 	bgPicture = new Picture("Resources/bg/white.jpg");
+	bgPicture->glStuff();
 	bgPicture->setPosition(glm::vec3(0, 0, -1.0f));
 	bgPicture->setSize(6);
 	bgPicture->setVisible(true);
-	
-	vector<string> picturePaths;
-	Tool::traverseFilesInDirectory("Resources/pictures", picturePaths, true);
-	//Tool::traverseFilesInDirectory("E:/Privacy/图片/基友西湖游", picturePaths, true);
-
-	sort(picturePaths.begin(), picturePaths.end());
-
-	spanAngle = picturePaths.size() <= 24 ? 15.0f : 360.0f / picturePaths.size();
-	radius = 0.5f * SpanDistance / sin(glm::radians(spanAngle / 2));
-
-	Picture::setRadius(radius);
-
-	int n = picturePaths.size();
-	for (int i = 0; i < n; i++)
-	{
-		Picture *picture = new Picture(picturePaths[i]);
-		picture->addAngle(spanAngle * (i - n / 2));
-
-		pictures.push_back(picture);
-	}
-
-	Picture *centerPicture = pictures[n / 2];
-	centerPicture->setSize(CenterScale);
 	bgPicture->setBlur(true);
 	bgPicture->setAlpha(CenterAlpha);
+}
+
+void Scene::loadPictures()
+{
+	vector<string> picturePaths;
+	//Tool::traverseFilesInDirectory("Resources/pictures", picturePaths, true);
+	Tool::traverseFilesInDirectory("E:/Privacy/图片/基友西湖游", picturePaths, true);
+	sort(picturePaths.begin(), picturePaths.end());
+
+	int i = 0;
+	for (string picturePath : picturePaths)
+	{
+		Picture *picture = new Picture(picturePath);
+		if (i != 0 && subthreadPictures.size() == 0)//说明主线程已退出，工作线程没必要继续执行了
+		{
+			break;
+		}
+
+		mu.lock();
+		subthreadPictures.push_back(picture);
+		mu.unlock();
+
+		i++;
+	}
+
+	loadFinish = true;
 }

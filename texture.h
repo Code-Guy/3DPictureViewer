@@ -11,11 +11,7 @@ public:
 	Texture(const std::string &fileName, GLuint minFilter = GL_LINEAR, GLuint magFilter = GL_LINEAR);
 	~Texture();
 
-	bool load(const std::string &fileName, GLuint minFilter, GLuint magFilter);
-
 	void bind(GLenum textureUnit);
-
-	bool isValid();
 
 	int getWidth();
 	int getHeight();
@@ -26,9 +22,13 @@ public:
 	unsigned char *getBits();
 	void setBits(unsigned char *bits, int w, int h);
 
+	bool attach();
+
 private:
-	bool valid;
 	bool compress;
+
+	GLuint minFilter;
+	GLuint magFilter;
 
 	GLuint textureObj;
 
@@ -40,6 +40,8 @@ private:
 
 	int realWidth;
 	int realHeight;
+
+	void load(const std::string &fileName);
 };
 
 #endif //_TEXTURE_H

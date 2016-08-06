@@ -28,6 +28,7 @@ public:
 	void setBits(unsigned char *bits, int w, int h);
 
 	float getAngle();
+	void setAngle(float angle);
 	void addAngle(float angle);
 
 	int getWidth();
@@ -40,6 +41,8 @@ public:
 	void setVisible(bool isVisible);
 	void setBlur(bool isBlur);
 	void setAlpha(float alpha);
+
+	bool glStuff();
 
 	static void setRadius(float radius);
 

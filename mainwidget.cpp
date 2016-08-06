@@ -228,10 +228,10 @@ void MainWidget::initGLStates()//初始化opengl参数
 
 void MainWidget::initLabels()
 {
-	fileNameLabel = new QLabel;
-	fileNameLabel->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
+	fileNameLabel = new QLabel(this);
+	fileNameLabel->setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
 	fileNameLabel->setAttribute(Qt::WA_TranslucentBackground);
-	fileNameLabel->setText("temp");
+	fileNameLabel->setText(QString::fromLocal8Bit("加载中……"));
 	fileNameLabel->setFont(QFont("Microsoft YaHei", 18));
 	QPalette p1;
 	p1.setColor(QPalette::WindowText, FileNameColor);
@@ -239,10 +239,10 @@ void MainWidget::initLabels()
 	fileNameLabel->adjustSize();
 	fileNameLabel->show();
 
-	resolutionLabel = new QLabel;
-	resolutionLabel->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
+	resolutionLabel = new QLabel(this);
+	resolutionLabel->setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
 	resolutionLabel->setAttribute(Qt::WA_TranslucentBackground);
-	resolutionLabel->setText("temp");
+	resolutionLabel->setText(QString::fromLocal8Bit("加载中……"));
 	resolutionLabel->setFont(QFont("Microsoft YaHei", 14));
 	QPalette p2;
 	p2.setColor(QPalette::WindowText, ResolutionColor);

@@ -38,6 +38,7 @@ signals:
 
 private:
 	Picture *bgPicture;
+	std::vector<Picture *> subthreadPictures;
 	std::vector<Picture *> pictures;
 
 	static Camera *camera;
@@ -58,7 +59,12 @@ private:
 
 	std::deque<Action> actions;
 
-	void genPictures();
+	bool loadFinish;
+	bool arrangeFinish;
+
+	void loadBgPicture();
+	void loadPictures();
+	void arrangePictures();
 };
 
 #endif //_SCENE_H
