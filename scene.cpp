@@ -13,9 +13,9 @@ using namespace std;
 
 const int ShadowMapSize = 2048;
 const float SpanDistance = 3.5f;
-const float MouseMoveSensitiy = 0.5f;
-const float MouseEaseOutSensitiy = 3.0f;
-const float MouseEaseOutDump = 0.01f;
+const float MouseMoveSensitivity = 0.5f;
+const float MouseEaseOutSensitivity = 5.0f;
+const float MouseEaseOutDump = 0.1f;
 const float BounceTimeInterval = 0.8f;
 const int MaxVisiblePictureNum = 6;
 const float CenterScale = 1.8f;
@@ -47,6 +47,7 @@ Scene::Scene(int width, int height)
 		printf("initialize shadow map fbo failed!\n");
 	}
 
+	lastDeltaMousePosX = 0;
 	prevCenterPictureIndex = -1;
 	curCenterPictureIndex = -1;
 	loadFinish = false;
@@ -93,7 +94,7 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 			lastDeltaMousePosX = deltaMousePosX;
 			actions.clear();
 
-			deltaAngle = -(float)deltaMousePosX / n * MouseMoveSensitiy;
+			deltaAngle = -(float)deltaMousePosX / n * MouseMoveSensitivity;
 		}
 		else if (!actions.empty())//执行动作队列
 		{
@@ -151,7 +152,7 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 			}
 			index++;
 		}
-		Picture *centerPicture = pictures[curCenterPictureIndex];
+		centerPicture = pictures[curCenterPictureIndex];
 		//如果中心图片发生变动
 		if (curCenterPictureIndex != prevCenterPictureIndex)
 		{
@@ -222,16 +223,25 @@ void Scene::addAction()
 	{
 		Action action;
 		action.setBaseValue(0);
-		float easeOutLen = lastDeltaMousePosX / pictures.size() * MouseEaseOutSensitiy;
+		float easeOutLen = lastDeltaMousePosX / pictures.size() * MouseEaseOutSensitivity;
 
 		action.setIncrementValue(-easeOutLen);
-		action.setTimeInterval(sqrt(abs(easeOutLen) * MouseEaseOutDump));
+		action.setTimeInterval(sqrt(abs(easeOutLen)) * MouseEaseOutDump);
 		action.setCurveShape(EaseOutCurve);
 		action.start();
 		actions.push_back(action);
 
 		lastDeltaMousePosX = 0;
 	}
+}
+
+QString Scene::getCenterPicturePath()
+{
+	if (!arrangeFinish)
+	{
+		return QString();
+	}
+	return centerPicture->getFilePath();
 }
 
 void Scene::initSingletons(int width, int height)
@@ -298,8 +308,8 @@ void Scene::loadBgPicture()
 void Scene::loadPictures()
 {
 	vector<string> picturePaths;
-	//Tool::traverseFilesInDirectory("Resources/pictures", picturePaths, true);
-	Tool::traverseFilesInDirectory("E:/Privacy/图片/基友西湖游", picturePaths, true);
+	Tool::traverseFilesInDirectory("Resources/pictures", picturePaths, true);
+	//Tool::traverseFilesInDirectory("E:/Privacy/图片/基友西湖游", picturePaths, true);
 	sort(picturePaths.begin(), picturePaths.end());
 
 	int i = 0;

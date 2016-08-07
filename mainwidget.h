@@ -5,6 +5,7 @@
 #include <QTime>
 #include <QTimer>
 #include <QLabel>
+#include "picturewidget.h"
 #include "ui_mainwidget.h"
 
 #include "scene.h"
@@ -14,7 +15,7 @@ class MainWidget : public QWidget
 	Q_OBJECT
 
 public:
-	MainWidget(int fps = 60, QWidget *parent = 0);
+	MainWidget(int fps = 80, QWidget *parent = 0);
 	~MainWidget();
 
 protected:
@@ -23,9 +24,11 @@ protected:
 
 	virtual QPaintEngine* paintEngine() const { return NULL; } //避免界面闪烁
 	virtual void paintEvent(QPaintEvent* evt);
-	virtual void wheelEvent(QWheelEvent *evt);
+	virtual void keyPressEvent(QKeyEvent *evt);
 	virtual void mousePressEvent(QMouseEvent *evt);
 	virtual void mouseReleaseEvent(QMouseEvent *evt);
+	virtual void mouseDoubleClickEvent(QMouseEvent *evt);
+
 	virtual void closeEvent(QCloseEvent *evt);
 	virtual void changeEvent(QEvent *evt);
 
@@ -36,6 +39,7 @@ private slots:
 
 private:
 	Ui::MainWidgetClass ui;
+	int fps;
 
 	void initWidgetProp();//初始化widget的一些属性
 	void initOpenGLContext();//初始化window界面context
@@ -64,6 +68,8 @@ private:
 
 	QLabel *fileNameLabel;
 	QLabel *resolutionLabel;
+	
+	PictureWidget *pictureWidget;
 };
 
 #endif // MAINWIDGET_H

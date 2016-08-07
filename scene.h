@@ -24,6 +24,7 @@ public:
 	void render();
 
 	void addAction();
+	QString getCenterPicturePath();
 
 	static void initSingletons(int width, int height);
 	static void destorySingletons();
@@ -40,6 +41,8 @@ private:
 	Picture *bgPicture;
 	std::vector<Picture *> subthreadPictures;
 	std::vector<Picture *> pictures;
+
+	Picture *centerPicture;
 
 	static Camera *camera;
 	static PointLight *light;

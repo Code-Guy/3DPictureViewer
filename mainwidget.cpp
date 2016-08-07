@@ -14,8 +14,7 @@ const int HEIGHT = 720;
 const QColor FileNameColor(59, 59, 59, 255);
 const QColor ResolutionColor(112, 112, 112, 255);
 
-MainWidget::MainWidget(int fps, QWidget *parent)
-	: QWidget(parent)
+MainWidget::MainWidget(int fps, QWidget *parent) : fps(fps), QWidget(parent)
 {
 	ui.setupUi(this);
 
@@ -30,11 +29,12 @@ MainWidget::MainWidget(int fps, QWidget *parent)
 	connect(&drawTimer, SIGNAL(timeout()), this, SLOT(update()));
 	drawTimer.start(1000 / fps);
 
-	//初始化FPS计时器
 	fpsTime = new QTime;
 	fpsTime->start();
 
 	isMousePress = false;
+
+	pictureWidget = new PictureWidget;
 
 	Scene::initSingletons(WIDTH, HEIGHT);
 	scene = new Scene(WIDTH, HEIGHT);
@@ -42,6 +42,7 @@ MainWidget::MainWidget(int fps, QWidget *parent)
 	connect(scene, SIGNAL(setFileName(QString)), this, SLOT(setFileName(QString)));
 	connect(scene, SIGNAL(setResolution(int, int)), this, SLOT(setResolution(int, int)));
 	connect(scene, SIGNAL(setAlpha(float)), this, SLOT(setAlpha(float)));
+	connect(pictureWidget, SIGNAL(closing()), this, SLOT(show()));
 }
 
 MainWidget::~MainWidget()
@@ -52,6 +53,7 @@ MainWidget::~MainWidget()
 	delete scene;
 	delete fileNameLabel;
 	delete resolutionLabel;
+	delete pictureWidget;
 
 	wglDeleteContext(_dummy_glctx);
 	wglDeleteContext(_real_glctx);
@@ -94,9 +96,14 @@ void MainWidget::renderLabels()
 	resolutionLabel->move(pos() + QPoint((width() - resolutionLabel->width()) / 2, 70));
 }
 
-void MainWidget::wheelEvent(QWheelEvent *evt)
+void MainWidget::keyPressEvent(QKeyEvent *evt)
 {
-	int numSteps = evt->delta() / 120;//滚动的步数
+	switch (evt->key())
+	{
+	case Qt::Key_Escape:
+		close();
+		break;
+	}
 }
 
 void MainWidget::mousePressEvent(QMouseEvent *evt)
@@ -110,6 +117,18 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *evt)
 {
 	isMousePress = false;
 	scene->addAction();
+}
+
+void MainWidget::mouseDoubleClickEvent(QMouseEvent *evt)
+{
+	QString centerPicturePath = scene->getCenterPicturePath();
+	if (!centerPicturePath.isNull())
+	{
+		QPixmap centerPicture(centerPicturePath);
+		pictureWidget->setPicturePath(centerPicturePath);
+		pictureWidget->showMaximized();
+		close();
+	}
 }
 
 void MainWidget::closeEvent(QCloseEvent *evt)
@@ -399,4 +418,9 @@ void MainWidget::tick()
 	deltaTime = fpsTime->elapsed();
 	deltaTime /= 1000.0f;
 	fpsTime->restart();
+
+	if (deltaTime > 2.0 / fps)
+	{
+		deltaTime = 1.0 / fps;
+	}
 }

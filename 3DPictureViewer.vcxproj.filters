@@ -86,6 +86,15 @@
     <ClCompile Include="GeneratedFiles\Release\moc_scene.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="picturewidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_picturewidget.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_picturewidget.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="mainwidget.h">
@@ -98,6 +107,9 @@
       <Filter>Resource Files</Filter>
     </CustomBuild>
     <CustomBuild Include="scene.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="picturewidget.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>

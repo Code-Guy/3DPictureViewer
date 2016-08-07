@@ -58,6 +58,11 @@ void Action::start()
 	running = true;
 }
 
+void Action::pause()
+{
+	running = false;
+}
+
 void Action::setBaseValue(float baseValue)
 {
 	this->baseValue = baseValue;
@@ -96,6 +101,11 @@ float Action::getValue()
 float Action::getDeltaValue()
 {
 	return deltaVal;
+}
+
+float Action::getRestValue()
+{
+	return incrementVal * (1 - t / timeInterval);
 }
 
 bool Action::isRunning()

@@ -6,10 +6,12 @@ float Picture::radius;
 
 const float ShadowMapDepthOffset = -0.01f;
 
-Picture::Picture(std::string fileName)
+Picture::Picture(std::string filePath)
 {
-	texture = new Texture(fileName);
-	this->fileName = QString::fromLocal8Bit(getFileName(fileName).c_str());
+	texture = new Texture(filePath);
+
+	this->filePath = QString::fromLocal8Bit(filePath.c_str());
+	this->fileName = QString::fromLocal8Bit(parseFileName(filePath).c_str());
 
 	position = glm::vec3();
 	angle = 0;
@@ -104,6 +106,11 @@ int Picture::getRealHeight()
 QString Picture::getFileName()
 {
 	return fileName;
+}
+
+QString Picture::getFilePath()
+{
+	return filePath;
 }
 
 unsigned char *Picture::getBits()
@@ -218,7 +225,7 @@ glm::mat4 Picture::getModelMatrix()
 	return T * R * S;
 }
 
-std::string Picture::getFileName(std::string filePath)
+std::string Picture::parseFileName(std::string filePath)
 {
 	int pos = filePath.find_last_of('/');
 	return std::string(filePath.substr(pos + 1));

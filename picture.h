@@ -17,7 +17,7 @@
 class Picture
 {
 public:
-	Picture(std::string fileName);
+	Picture(std::string filePath);
 	~Picture();
 
 	void renderPass(PictureShader *pictureShader);
@@ -36,6 +36,7 @@ public:
 	int getRealWidth();
 	int getRealHeight();
 	QString getFileName();
+	QString getFilePath();
 	unsigned char *getBits();
 
 	void setVisible(bool isVisible);
@@ -49,6 +50,7 @@ public:
 private:
 	Texture *texture;
 	QString fileName;
+	QString filePath;
 
 	GLuint vao;
 	GLuint buffers[3];
@@ -68,7 +70,7 @@ private:
 	static float radius;
 
 	glm::mat4 getModelMatrix();
-	std::string getFileName(std::string filePath);
+	std::string parseFileName(std::string filePath);
 };
 
 #endif //_PICTURE_H

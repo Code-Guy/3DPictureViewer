@@ -18,15 +18,18 @@ public:
 
 	void logic(float deltaTime);
 	void start();
-
+	void pause();
+	
 	void setBaseValue(float baseValue);
 	void setIncrementValue(float incrementVal);
+
 	void setTimeInterval(float timeInterval);
 	void setCurveShape(CurveShape curveShape);
 
 	CurveShape getCurveShape();
 	float getValue();
 	float getDeltaValue();
+	float getRestValue();
 
 	bool isRunning();
 
