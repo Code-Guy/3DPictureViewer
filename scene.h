@@ -4,10 +4,12 @@
 #include "picture.h"
 #include "pictureshader.h"
 #include "shadowmapshader.h"
+#include "billboardshader.h"
 #include "shadowmapfbo.h"
 #include "camera.h"
 #include "light.h"
 #include "action.h"
+#include "particleysytem.h"
 
 #include <vector>
 #include <deque>
@@ -24,7 +26,9 @@ public:
 	void render();
 
 	void addAction();
-	QString getCenterPicturePath();
+	QString getCenterPicturePath(QPoint mousePos);
+
+	void load(QString dir);
 
 	static void initSingletons(int width, int height);
 	static void destorySingletons();
@@ -38,6 +42,9 @@ signals:
 	void setAlpha(float alpha);
 
 private:
+	int width;
+	int height;
+
 	Picture *bgPicture;
 	std::vector<Picture *> subthreadPictures;
 	std::vector<Picture *> pictures;
@@ -49,7 +56,11 @@ private:
 
 	PictureShader *pictureShader;
 	ShadowMapShader *shadowMapShader;
+	BillboardShader *billboardShader;
 	ShadowMapFBO *shadowMapFBO;
+
+	Texture *psTexture;
+	ParticleSystem *lps, *rps;
 
 	float radius;
 	float spanAngle;
@@ -64,10 +75,15 @@ private:
 
 	bool loadFinish;
 	bool arrangeFinish;
+	bool isLoading;
+
+	void reset();
 
 	void loadBgPicture();
-	void loadPictures();
+	void loadPictures(QString dir);
 	void arrangePictures();
+
+	void initParticleSystem();
 };
 
 #endif //_SCENE_H

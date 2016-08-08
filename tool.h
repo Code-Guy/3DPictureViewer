@@ -18,6 +18,15 @@ public:
 	static void blur(unsigned char *srcBits, unsigned char *&dstBits, int w, int h, int r);
 	static void blend(unsigned char *lhs, unsigned char *rhs, unsigned char *&ret, int w, int h, float alpha);
 
+	static int randIntToInt(int lower, int upper);
+	static float randZeroToOne();
+	static float randFloatToFloat(float lower, float upper);
+	static glm::vec3 randVec3ToVec3(const glm::vec3 &lower, const glm::vec3 &upper);
+	static glm::vec3 interpVec3(const glm::vec3 &lhs, const glm::vec3 &rhs, float t);
+
+	//标准椭球分布(minEmitterRange为0：整个椭球 minEmitterRange为1：椭球壳)
+	static glm::vec3 uniformEllipsoidSample(const glm::vec3 &ellipsoid, float minEmitterRange);
+
 private:
 	static void gaussainBlur(int *scl, int *tcl, int w, int h, int r);
 	static void fastGaussainBlur(int *scl, int *tcl, int w, int h, int r);

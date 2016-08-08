@@ -95,6 +95,12 @@
     <ClCompile Include="GeneratedFiles\Release\moc_picturewidget.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="particleysytem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="billboardshader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="mainwidget.h">
@@ -145,6 +151,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="tool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="particleysytem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="billboardshader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

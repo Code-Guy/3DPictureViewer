@@ -16,7 +16,7 @@ Texture::Texture(const std::string& fileName, GLuint minFilter, GLuint magFilter
 	srcBits = NULL;
 	blankBits = NULL;
 
-	load(fileName);
+	valid = load(fileName);
 }
 
 Texture::~Texture()
@@ -32,9 +32,13 @@ Texture::~Texture()
 	}
 }
 
-void Texture::load(const string& fileName)
+bool Texture::load(const string& fileName)
 {
-	QImage image(QString::fromLocal8Bit(fileName.c_str()));;
+	QImage image(QString::fromLocal8Bit(fileName.c_str()));
+	if (image.isNull())
+	{
+		return false;
+	}
 
 	int w = image.width();
 	int h = image.height();
@@ -67,12 +71,19 @@ void Texture::load(const string& fileName)
 			srcBits[((h - i - 1) * w + j) * 4 + 3] = qAlpha(pixelData);
 		}
 	}
+
+	return true;
 }
 
 void Texture::bind(GLenum textureUnit)
 {
 	glActiveTexture(textureUnit);
 	glBindTexture(GL_TEXTURE_2D, textureObj);
+}
+
+bool Texture::isValid()
+{
+	return valid;
 }
 
 int Texture::getWidth()

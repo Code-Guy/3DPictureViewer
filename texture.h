@@ -13,6 +13,8 @@ public:
 
 	void bind(GLenum textureUnit);
 
+	bool isValid();
+
 	int getWidth();
 	int getHeight();
 
@@ -26,6 +28,7 @@ public:
 
 private:
 	bool compress;
+	bool valid;
 
 	GLuint minFilter;
 	GLuint magFilter;
@@ -41,7 +44,7 @@ private:
 	int realWidth;
 	int realHeight;
 
-	void load(const std::string &fileName);
+	bool load(const std::string &fileName);
 };
 
 #endif //_TEXTURE_H

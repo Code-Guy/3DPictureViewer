@@ -50,6 +50,11 @@ Picture::~Picture()
 	delete texture;
 }
 
+bool Picture::isValid()
+{
+	return texture->isValid();
+}
+
 void Picture::setPosition(glm::vec3 position)
 {
 	this->position = position;
@@ -214,6 +219,31 @@ bool Picture::glStuff()
 	}
 
 	return texture->attach();
+}
+
+bool Picture::hit(glm::vec3 p, glm::vec3 d)
+{
+	glm::mat4 M = getModelMatrix();
+	glm::vec4 mpos4[4];
+	glm::vec3 mpos[4];
+	for (int i = 0; i < 4; i++)
+	{
+		mpos4[i] = M * glm::vec4(pos[i], 1.0f);
+		mpos[i] = glm::vec3(mpos4[i]) / mpos4[i].w;
+	}
+
+	float t = (mpos[0].z - p.z) / d.z;
+	if (t > 0)
+	{
+		float x = p.x + d.x * t;
+		float y = p.y + d.y * t;
+		if (x > mpos[1].x && x < mpos[0].x && y > mpos[2].y && y < mpos[0].y)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 glm::mat4 Picture::getModelMatrix()

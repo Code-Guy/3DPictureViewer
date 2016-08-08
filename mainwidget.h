@@ -28,7 +28,8 @@ protected:
 	virtual void mousePressEvent(QMouseEvent *evt);
 	virtual void mouseReleaseEvent(QMouseEvent *evt);
 	virtual void mouseDoubleClickEvent(QMouseEvent *evt);
-
+	virtual void dragEnterEvent(QDragEnterEvent *evt);
+	virtual void dropEvent(QDropEvent *evt);
 	virtual void closeEvent(QCloseEvent *evt);
 	virtual void changeEvent(QEvent *evt);
 

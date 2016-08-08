@@ -142,6 +142,54 @@ void Tool::blend(unsigned char *lhs, unsigned char *rhs, unsigned char *&ret, in
 	}
 }
 
+int Tool::randIntToInt(int lower, int upper)
+{
+	if (lower == upper)
+	{
+		return lower;
+	}
+	//note:不包括上边界
+	return lower + rand() % (upper - lower);
+}
+
+float Tool::randZeroToOne()
+{
+	return ((float)rand()) / RAND_MAX;
+}
+
+float Tool::randFloatToFloat(float lower, float upper)
+{
+	return randZeroToOne() * (upper - lower) + lower;
+}
+
+glm::vec3 Tool::randVec3ToVec3(const glm::vec3 &lower, const glm::vec3 &upper)
+{
+	return glm::vec3(randFloatToFloat(lower.x, upper.x),
+		randFloatToFloat(lower.y, upper.y),
+		randFloatToFloat(lower.z, upper.z));
+}
+
+glm::vec3 Tool::interpVec3(const glm::vec3 &lhs, const glm::vec3 &rhs, float t)
+{
+	return lhs * (1 - t) + rhs * t;
+}
+
+//标准椭球分布(minEmitterRange为0：整个椭球 minEmitterRange为1：椭球壳)
+glm::vec3 Tool::uniformEllipsoidSample(const glm::vec3 &ellipsoid, float minEmitterRange)
+{
+	//先计算标准正球分布
+	float a = randFloatToFloat(-180.0f, 180.0f) * (3.1415926 / 180.0f);
+	float b = acos(2 * randZeroToOne() - 1);
+	float r = pow(randZeroToOne() * (1 - pow(minEmitterRange, 3) + pow(minEmitterRange, 3)), 1 / 3);
+
+	glm::vec3 sampleP;
+	sampleP.x = r * sin(b) * cos(a);
+	sampleP.y = r * sin(b) * sin(a);
+	sampleP.z = r * cos(b);
+
+	return sampleP * ellipsoid;
+}
+
 void Tool::gaussainBlur(int *scl, int *tcl, int w, int h, int r)
 {
 	int rs = ceil(r * 2.57);     // significant radius

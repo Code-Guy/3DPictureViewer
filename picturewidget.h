@@ -29,14 +29,11 @@ signals:
 
 private:
 	int fps;
+
 	QPixmap picture;
-	QPixmap displayPicture;
+	QPoint offsetPos;
 
-	float adaptedWidth;
-
-	QPoint pos;
-
-	float mousePosRatioX, mousePosRatioY;
+	float scaleFactor;
 
 	QRect desktopRect;
 
@@ -49,8 +46,10 @@ private:
 
 	QPoint prevMousePos;
 	QPoint curMousePos;
+	QPoint curCursorPos;
 
-	QPoint realCurMousePos;
+	float curPosRatioX;
+	float curPosRatioY;
 
 	void tick();
 };

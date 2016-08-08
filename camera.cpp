@@ -1,5 +1,6 @@
 #include "camera.h"
 #include "tool.h"
+#include <GL/glew.h>
 
 const float OrthoSize = 10.0f;
 const float PitchClampOffset = 1.0f;
@@ -35,6 +36,29 @@ glm::mat4 Camera::getProjMatrix()
 glm::mat4 Camera::getViewProjMatrix()
 {
 	return VP;
+}
+
+void Camera::castRay(glm::ivec4 viewport, int x, int y, glm::vec3 &p, glm::vec3 &d)
+{
+	GLdouble mvMatrix[16];
+	GLdouble projMatrix[16];
+	GLdouble wX, wY, wZ;
+	int rectifyY = viewport[3] - y - 1;
+
+	//模型视图矩阵 投影矩阵
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			mvMatrix[4 * i + j] = V[i][j];
+			projMatrix[4 * i + j] = P[i][j];
+		}
+	}
+
+	gluUnProject(x, rectifyY, 1.0, mvMatrix, projMatrix, glm::value_ptr(viewport), &wX, &wY, &wZ);
+
+	p = pos;
+	d = glm::normalize(glm::vec3(wX, wY, wZ) - p);
 }
 
 void Camera::getCameraVectors()

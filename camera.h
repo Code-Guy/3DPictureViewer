@@ -16,6 +16,8 @@ public:
 	glm::mat4 getProjMatrix();
 	glm::mat4 getViewProjMatrix();
 
+	void castRay(glm::ivec4 viewport, int x, int y, glm::vec3 &p, glm::vec3 &d);
+
 private:
 	glm::mat4 O;
 	glm::mat4 V;

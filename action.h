@@ -18,7 +18,7 @@ public:
 
 	void logic(float deltaTime);
 	void start();
-	void pause();
+	void stop();
 	
 	void setBaseValue(float baseValue);
 	void setIncrementValue(float incrementVal);

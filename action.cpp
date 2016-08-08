@@ -58,7 +58,7 @@ void Action::start()
 	running = true;
 }
 
-void Action::pause()
+void Action::stop()
 {
 	running = false;
 }

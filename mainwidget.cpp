@@ -1,6 +1,11 @@
 #include "mainwidget.h"
 #include <QMessageBox>
 #include <QWheelEvent>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QFileInfo>
+#include <time.h>
 #include <GL/glew.h>
 #include <GL/wglext.h>
 #include <Windows.h>
@@ -17,6 +22,8 @@ const QColor ResolutionColor(112, 112, 112, 255);
 MainWidget::MainWidget(int fps, QWidget *parent) : fps(fps), QWidget(parent)
 {
 	ui.setupUi(this);
+
+	srand((unsigned int)time(NULL));//初始化随机数种子
 
 	initWidgetProp();
 	initOpenGLContext();
@@ -121,13 +128,36 @@ void MainWidget::mouseReleaseEvent(QMouseEvent *evt)
 
 void MainWidget::mouseDoubleClickEvent(QMouseEvent *evt)
 {
-	QString centerPicturePath = scene->getCenterPicturePath();
+	QString centerPicturePath = scene->getCenterPicturePath(evt->pos());
 	if (!centerPicturePath.isNull())
 	{
 		QPixmap centerPicture(centerPicturePath);
 		pictureWidget->setPicturePath(centerPicturePath);
 		pictureWidget->showMaximized();
 		close();
+	}
+}
+
+void MainWidget::dragEnterEvent(QDragEnterEvent *evt)
+{
+	if (evt->mimeData()->hasUrls())
+	{
+		evt->acceptProposedAction();
+	}
+}
+
+void MainWidget::dropEvent(QDropEvent *evt)
+{
+	if (evt->mimeData()->hasUrls()) 
+	{
+		QList<QUrl> urls = evt->mimeData()->urls();
+		QString str = urls.first().toLocalFile();
+		QFileInfo fi(str);
+
+		if (fi.isDir())
+		{
+			scene->load(str);
+		}
 	}
 }
 
@@ -181,6 +211,8 @@ void MainWidget::initWidgetProp()//初始化widget的一些属性
 
 	setAttribute(Qt::WA_OpaquePaintEvent);
 	setAttribute(Qt::WA_PaintOnScreen);
+
+	setAcceptDrops(true);
 
 	setFixedSize(WIDTH, HEIGHT);
 }
@@ -250,7 +282,6 @@ void MainWidget::initLabels()
 	fileNameLabel = new QLabel(this);
 	fileNameLabel->setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
 	fileNameLabel->setAttribute(Qt::WA_TranslucentBackground);
-	fileNameLabel->setText(QString::fromLocal8Bit("加载中……"));
 	fileNameLabel->setFont(QFont("Microsoft YaHei", 18));
 	QPalette p1;
 	p1.setColor(QPalette::WindowText, FileNameColor);
@@ -261,7 +292,6 @@ void MainWidget::initLabels()
 	resolutionLabel = new QLabel(this);
 	resolutionLabel->setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
 	resolutionLabel->setAttribute(Qt::WA_TranslucentBackground);
-	resolutionLabel->setText(QString::fromLocal8Bit("加载中……"));
 	resolutionLabel->setFont(QFont("Microsoft YaHei", 14));
 	QPalette p2;
 	p2.setColor(QPalette::WindowText, ResolutionColor);

@@ -20,6 +20,8 @@ public:
 	Picture(std::string filePath);
 	~Picture();
 
+	bool isValid();
+
 	void renderPass(PictureShader *pictureShader);
 	void shadowMapPass(ShadowMapShader *shadowMapShader);
 
@@ -44,6 +46,7 @@ public:
 	void setAlpha(float alpha);
 
 	bool glStuff();
+	bool hit(glm::vec3 p, glm::vec3 d);
 
 	static void setRadius(float radius);
 

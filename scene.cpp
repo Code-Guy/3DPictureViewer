@@ -1,10 +1,12 @@
 #include "scene.h"
 #include "camera.h"
 #include "tool.h"
-
-#include <algorithm>
 #include <thread>
+#include <algorithm>
 #include <mutex>
+#include <QByteArray>
+#include <QMessageBox>
+#include <QDebug>
 
 Camera *Scene::camera = NULL;
 PointLight *Scene::light = NULL;
@@ -24,7 +26,7 @@ const float ArrangePicturesInterval = 0.5f;
 
 std::mutex mu;
 
-Scene::Scene(int width, int height)
+Scene::Scene(int width, int height) : width(width), height(height)
 {
 	pictureShader = new PictureShader;
 	if (!pictureShader->init())
@@ -41,22 +43,23 @@ Scene::Scene(int width, int height)
 		printf("initialize shadow map shader failed!\n");
 	}
 
+	billboardShader = new BillboardShader;
+	//初始化billboard shader
+	if (!billboardShader->init()) {
+		printf("Error initializing the billboardShader\n");
+	}
+	billboardShader->enable();
+	billboardShader->setTextureUnit(0);
+
 	shadowMapFBO = new ShadowMapFBO();
 	if (!shadowMapFBO->init(width, height))
 	{
 		printf("initialize shadow map fbo failed!\n");
 	}
 
-	lastDeltaMousePosX = 0;
-	prevCenterPictureIndex = -1;
-	curCenterPictureIndex = -1;
-	loadFinish = false;
-	arrangeFinish = false;
-
+	reset();
 	loadBgPicture();
-
-	std::thread t([this] { loadPictures(); });
-	t.detach();
+	initParticleSystem();
 }
 
 Scene::~Scene()
@@ -69,11 +72,14 @@ Scene::~Scene()
 
 	delete pictureShader;
 	delete shadowMapShader;
+	delete billboardShader;
 	delete shadowMapFBO;
+
 }
 
 void Scene::logic(float deltaTime, int deltaMousePosX)
 {
+	//每隔一段时间重新排列一次图片，加载完成之后不再执行
 	static float arrangePicturesTimer = 0;
 	if (!arrangeFinish)
 	{
@@ -85,8 +91,9 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 		}
 	}
 
+	//计算角度增量
 	int n = pictures.size();
-	if (n > 1)
+	if (n != 0)
 	{
 		float deltaAngle = 0;
 		if (deltaMousePosX != 0)//如果拖动鼠标，旋转图片
@@ -121,10 +128,11 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 		}
 
 		//计算各种特殊角度
-		float upBoundAngle = spanAngle * (n / 2);
-		float backAngle = spanAngle * n;
+		float upBoundAngle = std::max(spanAngle * (n / 2), spanAngle);
+		float backAngle = std::max(spanAngle * n, 2 * upBoundAngle);
 		float invisibleAngle = MaxVisiblePictureNum / 2 * spanAngle;
 
+		//更新每张图片的角度值
 		centerPictureAngle = MAX_NUM;
 		int index = 0;
 		for (auto picture : pictures)
@@ -152,8 +160,9 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 			}
 			index++;
 		}
+
+		//更新中心图片的文件信息
 		centerPicture = pictures[curCenterPictureIndex];
-		//如果中心图片发生变动
 		if (curCenterPictureIndex != prevCenterPictureIndex)
 		{
 			bgPicture->setBits(centerPicture->getBits(), centerPicture->getWidth(), centerPicture->getHeight());
@@ -163,7 +172,7 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 			prevCenterPictureIndex = curCenterPictureIndex;
 		}
 
-		//各种渐变效果
+		//设置图片透明度渐变效果
 		if (!Tool::isFloatEqual(centerPictureAngle, 0) && abs(centerPictureAngle) < spanAngle / 2)
 		{
 			float imageAlpha = -2.0f * CenterAlpha * abs(centerPictureAngle) / spanAngle + CenterAlpha;
@@ -173,6 +182,7 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 			emit setAlpha(textAlpha);
 		}
 
+		//设置图片大小渐变效果
 		for (auto picture : pictures)
 		{
 			float curPictureAngle = picture->getAngle();
@@ -189,6 +199,16 @@ void Scene::logic(float deltaTime, int deltaMousePosX)
 			{
 				picture->setSize(1.0f);
 			}
+		}
+
+		if (arrangeFinish)
+		{
+			bool isStatic = Tool::isFloatEqual(deltaAngle, 0);
+			lps->setEmitting(isStatic);
+			rps->setEmitting(isStatic);
+
+			lps->logic(deltaTime);
+			rps->logic(deltaTime);
 		}
 	}
 }
@@ -211,15 +231,26 @@ void Scene::render()
 	shadowMapFBO->bindForReading(GL_TEXTURE1);
 
 	bgPicture->renderPass(pictureShader);
+
 	for (auto picture : pictures)
 	{
 		picture->renderPass(pictureShader);
 	}
+
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (arrangeFinish)
+	{
+		lps->render(billboardShader);
+		rps->render(billboardShader);
+	}
+	glDisable(GL_BLEND);
 }
 
 void Scene::addAction()
 {
-	if (lastDeltaMousePosX != 0)
+	if (!pictures.empty() && lastDeltaMousePosX != 0)
 	{
 		Action action;
 		action.setBaseValue(0);
@@ -235,13 +266,44 @@ void Scene::addAction()
 	}
 }
 
-QString Scene::getCenterPicturePath()
+QString Scene::getCenterPicturePath(QPoint mousePos)
 {
-	if (!arrangeFinish)
+	if (pictures.empty() || !arrangeFinish)
 	{
 		return QString();
 	}
-	return centerPicture->getFilePath();
+
+	glm::vec3 p;
+	glm::vec3 d;
+
+	camera->castRay(glm::ivec4(0, 0, width, height), mousePos.x(), mousePos.y(), p, d);
+	if (centerPicture->hit(p, d))
+	{
+		return centerPicture->getFilePath();
+	}
+	
+	return QString();
+}
+
+void Scene::load(QString dir)
+{
+	if (!isLoading)
+	{
+		reset();
+
+		bgPicture->setBlur(true);
+		bgPicture->setAlpha(CenterAlpha);
+
+		for (auto picture : pictures)
+		{
+			delete picture;
+		}
+		pictures.clear();
+		subthreadPictures.clear();
+
+		std::thread t(&Scene::loadPictures, this, dir);
+		t.detach();
+	}
 }
 
 void Scene::initSingletons(int width, int height)
@@ -294,22 +356,69 @@ void Scene::arrangePictures()
 	arrangeFinish = loadFinish;
 }
 
-void Scene::loadBgPicture()
+void Scene::initParticleSystem()
 {
-	bgPicture = new Picture("Resources/bg/white.jpg");
-	bgPicture->glStuff();
-	bgPicture->setPosition(glm::vec3(0, 0, -1.0f));
-	bgPicture->setSize(6);
-	bgPicture->setVisible(true);
-	bgPicture->setBlur(true);
-	bgPicture->setAlpha(CenterAlpha);
+	psTexture = new Texture("Resources/particles/particle.png");
+	psTexture->attach();
+
+	glm::vec3 lpsColorSteps[4];
+	lpsColorSteps[0] = glm::vec3(207, 24, 29) / 255.0;
+	lpsColorSteps[1] = glm::vec3(144, 0, 123) / 255.0;
+	lpsColorSteps[2] = glm::vec3(225, 143, 181) / 255.0;
+	lpsColorSteps[3] = glm::vec3(230, 67, 112) / 255.0;
+
+	lps = new ParticleSystem(psTexture,
+		glm::vec3(-1.8f, -1.5f, 0), 8, glm::vec3(0, -5.0f, 0),
+		glm::vec3(0.1f, 0.1f, 0.1f), 0.8f,
+		0.06f, 0.12f,
+		0, 72,
+		1.2f, 1.8f,
+		glm::vec3(-0.8f, 2.0f, -0.2f), glm::vec3(-0.3f, 3.6f, 0.6f),
+		lpsColorSteps);
+
+	glm::vec3 rpsColorSteps[4];
+	rpsColorSteps[0] = glm::vec3(27, 30, 83) / 255.0;
+	rpsColorSteps[1] = glm::vec3(96, 173, 193) / 255.0;
+	rpsColorSteps[2] = glm::vec3(181, 206, 236) / 255.0;
+	rpsColorSteps[3] = glm::vec3(242, 214, 141) / 255.0;
+
+	rps = new ParticleSystem(psTexture,
+		glm::vec3(1.8f, -1.5f, 0), 8, glm::vec3(0, -5.0f, 0),
+		glm::vec3(0.1f, 0.1f, 0.1f), 0.8f,
+		0.06f, 0.12f,
+		0, 72,
+		1.2f, 1.8f,
+		glm::vec3(0.3f, 2.0f, -0.2f), glm::vec3(0.8f, 3.6f, 0.6f),
+		rpsColorSteps);
 }
 
-void Scene::loadPictures()
+void Scene::reset()
 {
+	lastDeltaMousePosX = 0;
+	prevCenterPictureIndex = -1;
+	curCenterPictureIndex = -1;
+	loadFinish = false;
+	arrangeFinish = false;
+	isLoading = false;
+}
+
+void Scene::loadBgPicture()
+{
+	bgPicture = new Picture("Resources/bg/splash.jpg");
+	bgPicture->glStuff();
+	bgPicture->setPosition(glm::vec3(0, 0, -1.0f));
+	bgPicture->setSize(5);
+	bgPicture->setVisible(true);
+	bgPicture->setBlur(false);
+	bgPicture->setAlpha(1.0f);
+}
+
+void Scene::loadPictures(QString dir)
+{
+	isLoading = true;
+	QByteArray ba = dir.toLocal8Bit();
 	vector<string> picturePaths;
-	Tool::traverseFilesInDirectory("Resources/pictures", picturePaths, true);
-	//Tool::traverseFilesInDirectory("E:/Privacy/图片/基友西湖游", picturePaths, true);
+	Tool::traverseFilesInDirectory(ba.data(), picturePaths, true);
 	sort(picturePaths.begin(), picturePaths.end());
 
 	int i = 0;
@@ -321,12 +430,16 @@ void Scene::loadPictures()
 			break;
 		}
 
-		mu.lock();
-		subthreadPictures.push_back(picture);
-		mu.unlock();
+		if (picture->isValid())
+		{
+			mu.lock();
+			subthreadPictures.push_back(picture);
+			mu.unlock();
+		}
 
 		i++;
 	}
 
 	loadFinish = true;
+	isLoading = false;
 }
