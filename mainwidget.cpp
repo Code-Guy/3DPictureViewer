@@ -5,6 +5,7 @@
 #include <QDropEvent>
 #include <QMimeData>
 #include <QFileInfo>
+#include <QPalette>
 #include <time.h>
 #include <GL/glew.h>
 #include <GL/wglext.h>
@@ -13,7 +14,7 @@
 HGLRC _dummy_glctx;
 HGLRC _real_glctx;
 
-const int MSAA = 4;
+const int MSAA = 2;
 const int WIDTH = 1280;
 const int HEIGHT = 720;
 const QColor FileNameColor(59, 59, 59, 255);
@@ -42,6 +43,16 @@ MainWidget::MainWidget(int fps, QWidget *parent) : fps(fps), QWidget(parent)
 	isMousePress = false;
 
 	pictureWidget = new PictureWidget;
+	editPictureDialog = new EditPictureDialog;
+	editPictureDialog->hide();
+	helpDialog = new QDialog;
+	QPalette palette = helpDialog->palette();
+	QPixmap logo("Resources/bg/logo.jpg");
+	palette.setBrush(QPalette::Window, logo);
+	helpDialog->setWindowTitle(QString::fromLocal8Bit("关于"));
+	helpDialog->setPalette(palette);
+	helpDialog->resize(logo.size());
+	helpDialog->hide();
 
 	Scene::initSingletons(WIDTH, HEIGHT);
 	scene = new Scene(WIDTH, HEIGHT);
@@ -49,7 +60,11 @@ MainWidget::MainWidget(int fps, QWidget *parent) : fps(fps), QWidget(parent)
 	connect(scene, SIGNAL(setFileName(QString)), this, SLOT(setFileName(QString)));
 	connect(scene, SIGNAL(setResolution(int, int)), this, SLOT(setResolution(int, int)));
 	connect(scene, SIGNAL(setAlpha(float)), this, SLOT(setAlpha(float)));
+	connect(scene, SIGNAL(displayCenterPicture(QString)), this, SLOT(displayCenterPicture(QString)));
+	connect(scene, SIGNAL(showEditPictureDialog(QString, QString, QString, int, int)), this, SLOT(showEditPictureDialog(QString, QString, QString, int, int)));
+	connect(scene, SIGNAL(showHelpDialog()), this, SLOT(showHelpDialog()));
 	connect(pictureWidget, SIGNAL(closing()), this, SLOT(show()));
+	connect(editPictureDialog, SIGNAL(reloadPicture(QString)), scene, SLOT(reloadPicture(QString)));
 }
 
 MainWidget::~MainWidget()
@@ -61,6 +76,8 @@ MainWidget::~MainWidget()
 	delete fileNameLabel;
 	delete resolutionLabel;
 	delete pictureWidget;
+	delete editPictureDialog;
+	delete helpDialog;
 
 	wglDeleteContext(_dummy_glctx);
 	wglDeleteContext(_real_glctx);
@@ -69,12 +86,13 @@ MainWidget::~MainWidget()
 void MainWidget::logic(float deltaTime)
 {
 	int deltaMousePosX = 0;
+	curMousePos = mapFromGlobal(cursor().pos());
 	if (isMousePress)
 	{
-		curMousePos = mapFromGlobal(cursor().pos());
 		deltaMousePosX = curMousePos.x() - prevMousePos.x();
 		prevMousePos = mapFromGlobal(cursor().pos());
 	}
+	scene->mouseMove(curMousePos.x(), curMousePos.y());
 	scene->logic(deltaTime, deltaMousePosX);
 }
 
@@ -110,6 +128,12 @@ void MainWidget::keyPressEvent(QKeyEvent *evt)
 	case Qt::Key_Escape:
 		close();
 		break;
+	case Qt::Key_Left:
+		scene->prevBtnClicked();
+		break;
+	case Qt::Key_Right:
+		scene->nextBtnClicked();
+		break;
 	}
 }
 
@@ -118,12 +142,15 @@ void MainWidget::mousePressEvent(QMouseEvent *evt)
 	isMousePress = true;
 	prevMousePos = evt->pos();
 	curMousePos = evt->pos();
+
+	scene->mousePress(evt->pos().x(), evt->pos().y());
 }
 
 void MainWidget::mouseReleaseEvent(QMouseEvent *evt)
 {
 	isMousePress = false;
-	scene->addAction();
+	scene->addEaseOutAction();
+	scene->mouseRelease(evt->pos().x(), evt->pos().y());
 }
 
 void MainWidget::mouseDoubleClickEvent(QMouseEvent *evt)
@@ -142,7 +169,14 @@ void MainWidget::dragEnterEvent(QDragEnterEvent *evt)
 {
 	if (evt->mimeData()->hasUrls())
 	{
-		evt->acceptProposedAction();
+		QList<QUrl> urls = evt->mimeData()->urls();
+		QString str = urls.first().toLocalFile();
+		QFileInfo fi(str);
+
+		if (fi.isDir())
+		{
+			evt->acceptProposedAction();
+		}
 	}
 }
 
@@ -204,10 +238,30 @@ void MainWidget::setAlpha(float alpha)
 	resolutionLabel->setPalette(p2);
 }
 
+void MainWidget::displayCenterPicture(QString centerPicturePath)
+{
+
+	QPixmap centerPicture(centerPicturePath);
+	pictureWidget->setPicturePath(centerPicturePath);
+	pictureWidget->showMaximized();
+	close();
+}
+
+void MainWidget::showEditPictureDialog(QString path, QString fileBaseName, QString fileSuffix, int width, int height)
+{
+	editPictureDialog->set(path, fileBaseName, fileSuffix, width, height);
+	editPictureDialog->exec();
+}
+
+void MainWidget::showHelpDialog()
+{
+	helpDialog->exec();
+}
+
 void MainWidget::initWidgetProp()//初始化widget的一些属性
 {
 	setWindowOpacity(1);
-	setWindowTitle(tr("3D Picture Viewer"));
+	setWindowTitle(QString::fromLocal8Bit("3D图片浏览器"));
 
 	setAttribute(Qt::WA_OpaquePaintEvent);
 	setAttribute(Qt::WA_PaintOnScreen);

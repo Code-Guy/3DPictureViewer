@@ -6,16 +6,14 @@ using namespace std;
 
 const float TimeRatioSteps[4] = { 0, 0.33f, 0.66f, 1.0f };
 
-ParticleSystem::ParticleSystem(Texture *texture,
-	glm::vec3 position, int emitSpeed, glm::vec3 gravity,
+ParticleSystem::ParticleSystem(glm::vec3 position, int emitSpeed, glm::vec3 gravity,
 	glm::vec3 ellipsoid, float emitterRange,
 	float minSize, float maxSize,
 	float minAngle, float maxAngle,
 	float minLife, float maxLife,
 	glm::vec3 minVec, glm::vec3 maxVec,
 	glm::vec3 colorSteps[4])
-	: texture(texture),
-	position(position), emitSpeed(emitSpeed), gravity(gravity),
+	: position(position), emitSpeed(emitSpeed), gravity(gravity),
 	ellipsoid(ellipsoid), emitterRange(emitterRange),
 	minSize(minSize), maxSize(maxSize),
 	minAngle(minAngle), maxAngle(maxAngle),
@@ -67,7 +65,6 @@ void ParticleSystem::render(BillboardShader *billboardShader)
 		glBindBuffer(GL_ARRAY_BUFFER, Color_B_ID);
 		glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), &colors[0], GL_DYNAMIC_DRAW);
 
-		billboardShader->enable();
 		billboardShader->setMV(Scene::getCamera()->getViewMatrix());
 		billboardShader->setP(Scene::getCamera()->getProjMatrix());
 		texture->bind(GL_TEXTURE0);
@@ -95,6 +92,11 @@ void ParticleSystem::render(BillboardShader *billboardShader)
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
 	}
+}
+
+void ParticleSystem::setTexture(Texture *texture)
+{
+	this->texture = texture;
 }
 
 void ParticleSystem::setEmitting(bool emitting)

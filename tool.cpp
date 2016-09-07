@@ -1,38 +1,76 @@
 #include "tool.h"
 #include <algorithm>
 #include <glm/ext.hpp>
-#include <Windows.h>
+#include <QDir>
+#include <QFileInfo>
+#include <QDebug>
+#include <iostream>
+#include <windows.h>
 
 const int MAX_PATH_LEN = 1024;
 const float FLOAT_EQUAL_EPSILON = 0.001f;
 
 using namespace std;
 
+// void Tool::traverseFilesInDirectory(string directory, vector<string> &fileNames, bool needPath)
+// {
+// 	char directory_ch[MAX_PATH_LEN];
+// 	sprintf(directory_ch, "%s/*.*", directory.c_str());
+// 
+// 	WIN32_FIND_DATAA fd;
+// 	HANDLE hFind = ::FindFirstFileA(directory_ch, &fd);
+// 	if (hFind != INVALID_HANDLE_VALUE)
+// 	{
+// 		do
+// 		{
+// 			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+// 			{
+// 				if (needPath)
+// 				{
+// 					fileNames.push_back(directory + "/" + fd.cFileName);
+// 				}
+// 				else
+// 				{
+// 					fileNames.push_back(fd.cFileName);
+// 				}
+// 			}
+// 		} while (::FindNextFileA(hFind, &fd));
+// 		::FindClose(hFind);
+// 	}
+// }
+
 void Tool::traverseFilesInDirectory(string directory, vector<string> &fileNames, bool needPath)
 {
-	char directory_ch[MAX_PATH_LEN];
-	sprintf(directory_ch, "%s/*.*", directory.c_str());
-
-	WIN32_FIND_DATAA fd;
-	HANDLE hFind = ::FindFirstFileA(directory_ch, &fd);
-	if (hFind != INVALID_HANDLE_VALUE)
+	QFileInfoList fileList = getFileList(Tool::str2qstr(directory));
+	for (auto fileInfo : fileList)
 	{
-		do
+		if (needPath)
 		{
-			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			{
-				if (needPath)
-				{
-					fileNames.push_back(directory + "/" + fd.cFileName);
-				}
-				else
-				{
-					fileNames.push_back(fd.cFileName);
-				}
-			}
-		} while (::FindNextFileA(hFind, &fd));
-		::FindClose(hFind);
+			fileNames.push_back(qstr2str(fileInfo.filePath()));
+		}
+		else
+		{
+			fileNames.push_back(qstr2str(fileInfo.fileName()));
+		}
 	}
+}
+
+QFileInfoList Tool::getFileList(QString path)
+{
+	QDir dir(path);
+	QStringList nameFilters;
+	nameFilters << "*.jpg" << "*.jpeg" << "*.png" << "*.bmp" << "*.gif" << "*.tga" << "*.tiff";
+	QFileInfoList fileList = dir.entryInfoList(nameFilters, QDir::Files | QDir::NoSymLinks);
+	QFileInfoList folderList = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+
+	for (int i = 0; i != folderList.size(); i++)
+	{
+		QString name = folderList.at(i).absoluteFilePath();
+		QFileInfoList childFileList = getFileList(name);
+		fileList.append(childFileList);
+	}
+
+	return fileList;
 }
 
 bool Tool::isFloatEqual(float lhs, float rhs)
@@ -190,6 +228,28 @@ glm::vec3 Tool::uniformEllipsoidSample(const glm::vec3 &ellipsoid, float minEmit
 	return sampleP * ellipsoid;
 }
 
+void Tool::moveToTrash(QString file)
+{
+	QFileInfo fileinfo(file);
+	if (!fileinfo.exists())
+		qDebug() << "File doesnt exists, cant move to trash";
+	WCHAR from[MAX_PATH];
+	memset(from, 0, sizeof(from));
+	int l = fileinfo.absoluteFilePath().toWCharArray(from);
+	Q_ASSERT(0 <= l && l < MAX_PATH);
+	from[l] = '\0';
+	SHFILEOPSTRUCT fileop;
+	memset(&fileop, 0, sizeof(fileop));
+	fileop.wFunc = FO_DELETE;
+	fileop.pFrom = from;
+	fileop.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT;
+	int rv = SHFileOperation(&fileop);
+	if (0 != rv){
+		qDebug() << rv << QString::number(rv).toInt(0, 8);
+		qDebug() << "move to trash failed";
+	}
+}
+
 void Tool::gaussainBlur(int *scl, int *tcl, int w, int h, int r)
 {
 	int rs = ceil(r * 2.57);     // significant radius
@@ -205,7 +265,7 @@ void Tool::gaussainBlur(int *scl, int *tcl, int w, int h, int r)
 				int y = min(h - 1, max(0, iy));
 				int dsq = (ix - j)*(ix - j) + (iy - i)*(iy - i);
 				float wght = exp(-dsq / (2 * r*r)) / (glm::pi<float>() * 2 * r*r);
-				val += scl[y*w + x] * wght;  
+				val += scl[y*w + x] * wght;
 				wsum += wght;
 			}
 			tcl[i*w + j] = round(val / wsum);
@@ -224,8 +284,8 @@ void Tool::fastGaussainBlur(int *scl, int *tcl, int w, int h, int r)
 std::vector<int> Tool::boxesForGauss(float sigma, int n)
 {
 	double wIdeal = sqrt((12 * sigma*sigma / n) + 1);  // Ideal averaging filter width 
-	int wl = floor(wIdeal);  
-	if (wl % 2 == 0) 
+	int wl = floor(wIdeal);
+	if (wl % 2 == 0)
 		wl--;
 	int wu = wl + 2;
 
@@ -233,14 +293,14 @@ std::vector<int> Tool::boxesForGauss(float sigma, int n)
 	int m = round(mIdeal);
 
 	std::vector<int> sizes;
-	for (int i = 0; i < n; i++) 
+	for (int i = 0; i < n; i++)
 		sizes.push_back(i < m ? wl : wu);
 	return sizes;
 }
 
 void Tool::boxBlur(int *scl, int *tcl, int w, int h, int r)
 {
-	memcpy(tcl, scl, sizeof(int) * w * h);
+	memcpy(tcl, scl, sizeof(int)* w * h);
 	boxBlurH(tcl, scl, w, h, r);
 	boxBlurH(scl, tcl, w, h, r);
 }
@@ -269,4 +329,15 @@ void Tool::boxBlurT(int *scl, int *tcl, int w, int h, int r)
 		for (int j = r + 1; j < h - r; j++) { val += scl[ri] - scl[li];  tcl[ti] = round(val*iarr);  li += w; ri += w; ti += w; }
 		for (int j = h - r; j < h; j++) { val += lv - scl[li];  tcl[ti] = round(val*iarr);  li += w; ti += w; }
 	}
+}
+
+QString Tool::str2qstr(const string str)
+{
+	return QString::fromLocal8Bit(str.data());
+}
+
+string Tool::qstr2str(const QString qstr)
+{
+	QByteArray cdata = qstr.toLocal8Bit();
+	return string(cdata);
 }

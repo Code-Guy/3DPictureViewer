@@ -1,6 +1,7 @@
 #include "picture.h"
 #include "scene.h"
 #include <QDebug>
+#include <QFileInfo>
 
 float Picture::radius;
 
@@ -17,6 +18,20 @@ Picture::Picture(std::string filePath)
 	angle = 0;
 	isVisible = false;
 	isBlur = false;
+
+	QFileInfo fileInfo(this->filePath);
+	path = fileInfo.path();
+	fileBaseName = fileInfo.baseName();
+	fileSuffix = fileInfo.suffix();
+
+	if (fileSuffix == "png" || fileSuffix == "PNG")
+	{
+		isTransparent = true;
+	}
+	else
+	{
+		isTransparent = false;
+	}
 
 	setSize(1.0f);
 
@@ -38,6 +53,7 @@ Picture::Picture(std::string filePath)
 	indices[5] = 0;
 
 	memset(buffers, 0, sizeof(GLuint)* 3);
+	vao = 0;
 }
 
 Picture::~Picture()
@@ -47,6 +63,11 @@ Picture::~Picture()
 		glDeleteBuffers(3, buffers);
 	}
 
+	if (vao != 0)
+	{
+		glDeleteVertexArrays(1, &vao);
+	}
+	
 	delete texture;
 }
 
@@ -118,6 +139,21 @@ QString Picture::getFilePath()
 	return filePath;
 }
 
+QString Picture::getPath()
+{
+	return path;
+}
+
+QString Picture::getFileBaseName()
+{
+	return fileBaseName;
+}
+
+QString Picture::getFileSuffix()
+{
+	return fileSuffix;
+}
+
 unsigned char *Picture::getBits()
 {
 	return texture->getBits();
@@ -142,6 +178,12 @@ void Picture::renderPass(PictureShader *pictureShader)
 {
 	if (isVisible)
 	{
+		if (isTransparent)
+		{
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+		
 		glBindVertexArray(vao);
 
 		glm::mat4 M = getModelMatrix();
@@ -158,6 +200,11 @@ void Picture::renderPass(PictureShader *pictureShader)
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glBindVertexArray(0);
+
+		if (isTransparent)
+		{
+			glDisable(GL_BLEND);
+		}
 	}
 }
 

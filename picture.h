@@ -39,6 +39,10 @@ public:
 	int getRealHeight();
 	QString getFileName();
 	QString getFilePath();
+	QString getPath();
+	QString getFileBaseName();
+	QString getFileSuffix();
+
 	unsigned char *getBits();
 
 	void setVisible(bool isVisible);
@@ -54,6 +58,9 @@ private:
 	Texture *texture;
 	QString fileName;
 	QString filePath;
+	QString path;
+	QString fileBaseName;
+	QString fileSuffix;
 
 	GLuint vao;
 	GLuint buffers[3];
@@ -68,6 +75,7 @@ private:
 
 	bool isVisible;
 	bool isBlur;
+	bool isTransparent;
 	float alpha;
 
 	static float radius;

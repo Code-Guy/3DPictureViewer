@@ -2,10 +2,13 @@
 #define MAINWIDGET_H
 
 #include <QtWidgets/QWidget>
+#include <QtWidgets/QDialog>
 #include <QTime>
 #include <QTimer>
 #include <QLabel>
 #include "picturewidget.h"
+#include "editpicturedialog.h"
+
 #include "ui_mainwidget.h"
 
 #include "scene.h"
@@ -37,6 +40,9 @@ private slots:
 	void setFileName(QString fileName);
 	void setResolution(int width, int height);
 	void setAlpha(float alpha);
+	void displayCenterPicture(QString centerPicturePath);
+	void showEditPictureDialog(QString path, QString fileBaseName, QString fileSuffix, int width, int height);
+	void showHelpDialog();
 
 private:
 	Ui::MainWidgetClass ui;
@@ -71,6 +77,8 @@ private:
 	QLabel *resolutionLabel;
 	
 	PictureWidget *pictureWidget;
+	EditPictureDialog *editPictureDialog;
+	QDialog *helpDialog;
 };
 
 #endif // MAINWIDGET_H

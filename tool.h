@@ -5,6 +5,7 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <QImage>
+#include <QFileInfo>
 
 #define MAX_NUM 1e6
 
@@ -26,6 +27,10 @@ public:
 
 	//标准椭球分布(minEmitterRange为0：整个椭球 minEmitterRange为1：椭球壳)
 	static glm::vec3 uniformEllipsoidSample(const glm::vec3 &ellipsoid, float minEmitterRange);
+	static void moveToTrash(QString file);
+
+	static QString str2qstr(const std::string str);
+	static std::string qstr2str(const QString qstr);
 
 private:
 	static void gaussainBlur(int *scl, int *tcl, int w, int h, int r);
@@ -34,6 +39,8 @@ private:
 	static void boxBlur(int *scl, int *tcl, int w, int h, int r);
 	static void boxBlurH(int *scl, int *tcl, int w, int h, int r);
 	static void boxBlurT(int *scl, int *tcl, int w, int h, int r);
+
+	static QFileInfoList getFileList(QString path);
 };
 
 #endif //_TOOL_H

@@ -39,7 +39,7 @@ PictureWidget::~PictureWidget()
 void PictureWidget::setPicturePath(QString filePath)
 {
 	picture = QPixmap(filePath);
-	
+
 	int w = picture.width();
 	int h = picture.height();
 
@@ -60,11 +60,11 @@ void PictureWidget::setPicturePath(QString filePath)
 		}
 	}
 
-	
+
 	float baseScaleFactor = (float)w / picture.width();
-	
+
 	offsetPos = QPoint((desktopRect.width() - w) / 2, (desktopRect.height() - h) / 2);
-	
+
 	bounceAction.setBaseValue(baseScaleFactor * BounceActionBaseValueRatio);
 	bounceAction.setIncrementValue(baseScaleFactor * (1 - BounceActionBaseValueRatio));
 	bounceAction.setTimeInterval(BounceActionTimeInterval);
@@ -80,6 +80,9 @@ void PictureWidget::paintEvent(QPaintEvent* evt)
 	tick();
 
 	QPainter painter(this);
+// 	QBrush brush(BackgroundColor);
+// 	painter.setBrush(brush);
+// 	painter.drawRect(rect());
 
 	if (bounceAction.isRunning())
 	{

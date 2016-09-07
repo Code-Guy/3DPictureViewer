@@ -26,8 +26,7 @@ struct Particle
 class ParticleSystem
 {
 public:
-	ParticleSystem(Texture *texture,
-		glm::vec3 position, int emitSpeed, glm::vec3 gravity,
+	ParticleSystem(glm::vec3 position, int emitSpeed, glm::vec3 gravity,
 		glm::vec3 ellipsoid, float emitterRange,
 		float minSize, float maxSize,
 		float minAngle, float maxAngle,
@@ -40,6 +39,7 @@ public:
 	void logic(float deltaTime);
 	void render(BillboardShader *billboardShader);
 
+	void setTexture(Texture *texture);
 	void setEmitting(bool emitting);
 
 private:
