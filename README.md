@@ -7,14 +7,14 @@ A simple 3d pciture viewer.
 We've got a lot of picture viewer applications: XnView, Picasa, IrfanView, FastStone... But nearly all of these softwares only display images in 2d form. Don't you think that's boring? So I thought of an idea to add some 3d stuff into the traditional picture viewer, without messing up users' regular interactions.
 
 ###How to use
-1.Double click to open the 3DPictureViewer.exe
-2.Drag the picture directory into application window, the pictures in the directory will be imported recursively.
-3.View pictures in 3d mode with your mouse:
-- Press and drag the left mouse button to rotate picture array slowly
-- Press and slip the left mouse button to rotate picture array quickly
-- Double click the middle picture to enter into display mode, where you can zoom and pan your selected picture.
-- Press "next", "previous", "delete", "edit", "display" tool buttons on the bottom to do what you want to do.
-- Press ESC key to quit viewer.
+ 1. Double click to open the 3DPictureViewer.exe
+ 2. Drag the picture directory into application window, the pictures in the directory will be imported recursively
+ 3. View pictures in 3d mode with your mouse
+  - Press and drag the left mouse button to rotate picture array slowly
+  - Press and slip the left mouse button to rotate picture array quickly
+  - Double click the middle picture to enter into display mode, where you can zoom and pan your selected picture.
+  - Press "next", "previous", "delete", "edit", "display" tool buttons on the bottom to do what you want to do.
+  - Press ESC key to quit viewer.
  
  ###Feature
  - 3D picture displaying
