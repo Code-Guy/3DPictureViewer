@@ -1,7 +1,7 @@
 # 3DPictureViewer
 A simple 3d pciture viewer.
 
-![main](https://github.com/Code-Guy/3DPictureViewer/blob/master/snapshots/%E8%8F%9C%E7%A9%97%E5%AD%90.png?raw=true)
+![main](https://github.com/Code-Guy/3DPictureViewer/blob/master/snapshots/1.png?raw=true)
 ###Introduction
 We've got a lot of picture viewer applications: XnView, Picasa, IrfanView, FastStone... But nearly all of these softwares only display images in 2d form. Don't you think that's boring? So I thought of an idea to add some 3d stuff into the traditional picture viewer, without messing up users' regular interactions.
 
@@ -23,6 +23,7 @@ We've got a lot of picture viewer applications: XnView, Picasa, IrfanView, FastS
  - Dynamic fragment shader Gaussian blur
  - Double thread architecture: main thread for opengl rendering, work thread for loading asset
  - Anti-Aliasing(based on MSAA)
+ - Frustum culling
 
  ###Framework
  Qt + OGL
@@ -32,3 +33,5 @@ We've got a lot of picture viewer applications: XnView, Picasa, IrfanView, FastS
 ![overlook](https://github.com/Code-Guy/3DPictureViewer/blob/master/snapshots/%E9%BE%99%E7%8C%AB.png?raw=true)
 
 ![overlook](https://github.com/Code-Guy/3DPictureViewer/blob/master/snapshots/%E8%A5%BF%E5%9F%8E%E7%94%B7%E5%AD%A9.png?raw=true)
+
+![overlook](https://github.com/Code-Guy/3DPictureViewer/blob/master/snapshots/3.png?raw=true)
